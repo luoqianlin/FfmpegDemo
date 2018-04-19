@@ -18,6 +18,7 @@ extern "C" {
 #include <libavfilter/avfilter.h>
 #include <libswscale/swscale.h>
 #include <libavutil/imgutils.h>
+#include <unistd.h>
 
 
 JNIEXPORT jstring
@@ -117,6 +118,15 @@ Java_cn_test_ffmpegdemo_MainActivity_avfilterinfo(JNIEnv *env, jobject instance)
     return env->NewStringUTF(info);
 }
 
+void print_error(const char *filename, int err)
+{
+    char errbuf[128];
+    const char *errbuf_ptr = errbuf;
+
+    if (av_strerror(err, errbuf, sizeof(errbuf)) < 0)
+        errbuf_ptr = strerror(AVUNERROR(err));
+    av_log(NULL, AV_LOG_ERROR, "%s: %s\n", filename, errbuf_ptr);
+}
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -127,22 +137,26 @@ Java_cn_test_ffmpegdemo_PlayActivity_play(JNIEnv *env, jobject instance, jobject
 
     // sd卡中的视频文件地址,可自行修改或者通过jni传入
     //char *file_name = "/storage/emulated/0/ws2.mp4";
-    const char *file_name = "/sdcard/aa.mp4";
+    const char *file_name = "/sdcard/VisualArts/materials/17bb7cb4ada9f141f70d9abeb39a8d5f.rmvb";
 
     av_register_all();
+//    avcodec_register_all();
+    avformat_network_init();
 
     AVFormatContext *pFormatCtx = avformat_alloc_context();
-
+    int ret;
     // Open video file
-    if (avformat_open_input(&pFormatCtx, file_name, NULL, NULL) != 0) {
-
-        LOGD("Couldn't open file:%s\n", file_name);
+    if ((ret=avformat_open_input(&pFormatCtx, file_name, NULL, NULL)) != 0) {
+        char errorMsg[1024];
+        av_strerror(ret, errorMsg, 1024);
+        LOGE("Couldn't open file:%s: %d(%s)\n", file_name,ret,errorMsg);
+//        print_error(file_name,ret);
         return -1; // Couldn't open file
     }
 
     // Retrieve stream information
     if (avformat_find_stream_info(pFormatCtx, NULL) < 0) {
-        LOGD("Couldn't find stream information.");
+        LOGE("Couldn't find stream information.");
         return -1;
     }
 
@@ -155,7 +169,7 @@ Java_cn_test_ffmpegdemo_PlayActivity_play(JNIEnv *env, jobject instance, jobject
         }
     }
     if (videoStream == -1) {
-        LOGD("Didn't find a video stream.");
+        LOGE("Didn't find a video stream.");
         return -1; // Didn't find a video stream
     }
 
@@ -186,13 +200,14 @@ Java_cn_test_ffmpegdemo_PlayActivity_play(JNIEnv *env, jobject instance, jobject
                                      WINDOW_FORMAT_RGBA_8888);
     ANativeWindow_Buffer windowBuffer;
 
-    if (avcodec_open2(pCodecCtx, pCodec, NULL) < 0) {
-        LOGD("Could not open codec.");
-        return -1; // Could not open codec
-    }
+//    if (avcodec_open2(pCodecCtx, pCodec, NULL) < 0) {
+//        LOGD("Could not open codec.");
+//        return -1; // Could not open codec
+//    }
 
     // Allocate video frame
     AVFrame *pFrame = av_frame_alloc();
+
 
     // 用于渲染
     AVFrame *pFrameRGBA = av_frame_alloc();
@@ -221,17 +236,20 @@ Java_cn_test_ffmpegdemo_PlayActivity_play(JNIEnv *env, jobject instance, jobject
                                                 NULL,
                                                 NULL);
 
-    int frameFinished;
-    AVPacket packet;
-    while (av_read_frame(pFormatCtx, &packet) >= 0) {
+    int got_picture;
+    AVPacket * packet=av_packet_alloc();;
+    while (av_read_frame(pFormatCtx, packet) >= 0) {
         // Is this a packet from the video stream?
-        if (packet.stream_index == videoStream) {
+        if (packet->stream_index == videoStream) {
 
             // Decode video frame
-            avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
-
+            ret=avcodec_decode_video2(pCodecCtx, pFrame, &got_picture, packet);
+            if(ret < 0){
+                LOGE("Decode Error.\n");
+                return -1;
+            }
             // 并不是decode一次就可解码出一帧
-            if (frameFinished) {
+            if (got_picture) {
 
                 // lock native window buffer
                 ANativeWindow_lock(nativeWindow, &windowBuffer, 0);
@@ -257,11 +275,46 @@ Java_cn_test_ffmpegdemo_PlayActivity_play(JNIEnv *env, jobject instance, jobject
             }
 
         }
-        av_packet_unref(&packet);
+        av_packet_unref(packet);
     }
 
+
+    //FIX: Flush Frames remained in Codec
+    while (1) {
+        ret = avcodec_decode_video2(pCodecCtx, pFrame, &got_picture, packet);
+        if (ret < 0)
+            break;
+        if (!got_picture)
+            break;
+        // lock native window buffer
+        ANativeWindow_lock(nativeWindow, &windowBuffer, 0);
+
+        // 格式转换
+        sws_scale(sws_ctx, (uint8_t const *const *) pFrame->data,
+                  pFrame->linesize, 0, pCodecCtx->height,
+                  pFrameRGBA->data, pFrameRGBA->linesize);
+
+        // 获取stride
+        uint8_t *dst = (uint8_t *) windowBuffer.bits;
+        int dstStride = windowBuffer.stride * 4;
+        uint8_t *src = (pFrameRGBA->data[0]);
+        int srcStride = pFrameRGBA->linesize[0];
+
+        // 由于window的stride和帧的stride不同,因此需要逐行复制
+        int h;
+        for (h = 0; h < videoHeight; h++) {
+            memcpy(dst + h * dstStride, src + h * srcStride, srcStride);
+        }
+
+        ANativeWindow_unlockAndPost(nativeWindow);
+
+    }
+
+    LOGI("视频播放完毕");
+    sws_freeContext(sws_ctx);
     av_free(buffer);
     av_free(pFrameRGBA);
+    av_packet_free(&packet);
 
     // Free the YUV frame
     av_free(pFrame);
@@ -271,11 +324,13 @@ Java_cn_test_ffmpegdemo_PlayActivity_play(JNIEnv *env, jobject instance, jobject
 
     // Close the video file
     avformat_close_input(&pFormatCtx);
+    ANativeWindow_release(nativeWindow);
     return 0;
 
 
 }
 #pragma clang diagnostic pop
+
 
 #ifdef __cplusplus
 }

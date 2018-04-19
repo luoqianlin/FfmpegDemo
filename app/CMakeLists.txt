@@ -58,13 +58,6 @@ add_library(
             IMPORTED
             )
 
-
-add_library(
-            fdk-aac
-            SHARED
-            IMPORTED
-            )
-
 if(${ANDROID_ABI} STREQUAL "armeabi")
 set_target_properties(
     avcodec
@@ -102,12 +95,6 @@ set_target_properties(
             ${CMAKE_SOURCE_DIR}/src/main/jniLibs/armeabi/libswscale.so
              )
 
-
-set_target_properties(
-            fdk-aac
-            PROPERTIES IMPORTED_LOCATION
-            ${CMAKE_SOURCE_DIR}/src/main/jniLibs/armeabi/libfdk-aac.so
-             )
 endif(${ANDROID_ABI} STREQUAL "armeabi")
 
 if(${ANDROID_ABI} STREQUAL "armeabi-v7a")
@@ -146,13 +133,6 @@ set_target_properties(
             swscale
             PROPERTIES IMPORTED_LOCATION
             ${CMAKE_SOURCE_DIR}/src/main/jniLibs/armeabi-v7a/libswscale.so
-             )
-
-
-set_target_properties(
-            fdk-aac
-            PROPERTIES IMPORTED_LOCATION
-            ${CMAKE_SOURCE_DIR}/src/main/jniLibs/armeabi-v7a/libfdk-aac.so
              )
 
 endif(${ANDROID_ABI} STREQUAL "armeabi-v7a")
@@ -195,11 +175,7 @@ set_target_properties(
              )
 
 
-set_target_properties(
-            fdk-aac
-            PROPERTIES IMPORTED_LOCATION
-            ${CMAKE_SOURCE_DIR}/src/main/jniLibs/arm64-v8a/libfdk-aac.so
-             )
+
 endif(${ANDROID_ABI} STREQUAL "arm64-v8a")
 
 if(${ANDROID_ABI} STREQUAL "x86")
@@ -239,11 +215,6 @@ set_target_properties(
             ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86/libswscale.so
              )
 
-set_target_properties(
-            fdk-aac
-            PROPERTIES IMPORTED_LOCATION
-            ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86/libfdk-aac.so
-             )
 endif(${ANDROID_ABI} STREQUAL "x86")
 
 if(${ANDROID_ABI} STREQUAL "x86_64")
@@ -283,11 +254,6 @@ set_target_properties(
             ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86_64/libswscale.so
              )
 
-set_target_properties(
-            fdk-aac
-            PROPERTIES IMPORTED_LOCATION
-            ${CMAKE_SOURCE_DIR}/src/main/jniLibs/x86_64/libfdk-aac.so
-             )
 endif(${ANDROID_ABI} STREQUAL "x86_64")
 
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
@@ -327,7 +293,6 @@ EGL )
 
 target_link_libraries( # Specifies the target library.
                        native-lib
-                       fdk-aac
                        avcodec
                        avfilter
                        avformat
