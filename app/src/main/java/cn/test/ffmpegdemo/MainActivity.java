@@ -9,7 +9,7 @@ import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private Button protocol,format,codec,filter,btn_play;
+    private Button protocol,format,codec,filter,btn_play,btn_getfirstframe;
     private TextView tv_info;
 
     // Used to load the 'native-lib' library on application startup.
@@ -31,12 +31,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         filter = (Button) findViewById(R.id.btn_filter);
         tv_info = (TextView) findViewById(R.id.tv_info);
         btn_play=findViewById(R.id.btn_play);
+        btn_getfirstframe=findViewById(R.id.btn_getfirstframe);
 
         protocol.setOnClickListener(this);
         format.setOnClickListener(this);
         codec.setOnClickListener(this);
         filter.setOnClickListener(this);
         btn_play.setOnClickListener(this);
+        btn_getfirstframe.setOnClickListener(this);
     }
     /**
      * A native method that is implemented by the 'native-lib' native library,
@@ -49,6 +51,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public native String avformatinfo();
     public native String avcodecinfo();
     public native String avfilterinfo();
+
+    public native void getfirstframe();
 
     @Override
     public void onClick(View view) {
@@ -67,6 +71,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btn_play:
                 startActivity(new Intent(this,PlayActivity.class));
+                break;
+            case R.id.btn_getfirstframe:
+                getfirstframe();
                 break;
             default:
                 break;
