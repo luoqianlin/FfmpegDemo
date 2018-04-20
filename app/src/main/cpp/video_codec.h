@@ -14,7 +14,27 @@
 #include <android/bitmap.h>
 #include "log.h"
 
+//#include <GLES/egl.h>
+//#include <GLES/gl.h>
+//#include <GLES/glext.h>
+//#include <GLES/glplatform.h>
 
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#include <EGL/eglplatform.h>
+
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
+#include <GLES2/gl2platform.h>
+
+
+//#include <GLES3/gl3.h>
+//#include <GLES3/gl31.h>
+//#include <GLES3/gl32.h>
+//#include <GLES3/gl3ext.h>
+//#include <GLES3/gl3platform.h>
+
+#include "shaderUtils.h"
 
 #ifdef __cplusplus
 extern "C" {

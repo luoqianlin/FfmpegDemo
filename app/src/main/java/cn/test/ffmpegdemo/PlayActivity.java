@@ -3,6 +3,7 @@ package cn.test.ffmpegdemo;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.ImageView;
@@ -35,6 +36,12 @@ public class PlayActivity extends AppCompatActivity {
 
             @Override
             public void surfaceCreated(final SurfaceHolder holder) {
+
+            }
+
+            @Override
+            public void surfaceChanged(final SurfaceHolder holder, int format, int width, int height) {
+                Log.e("PlayActivity","width:"+width+",height:"+height);
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -46,14 +53,19 @@ public class PlayActivity extends AppCompatActivity {
 //                        Bitmap bitmap = Bitmap.createBitmap(1280, 720, Bitmap.Config.ARGB_8888);
 //                        while (!videoCodec.fillBitmap(bitmap)){
 //                            Canvas canvas = holder.lockCanvas();
-//                            canvas.drawColor(Color.BLACK);
+////                            canvas.drawColor(Color.BLACK);
+//                            Paint paint = new Paint();
+//                            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+//                            canvas.drawPaint(paint);
+//                            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
 //                            canvas.drawBitmap(bitmap,0,0,null);
 //                            holder.unlockCanvasAndPost(canvas);
 ////                            bitmap = Bitmap.createBitmap(1280, 720, Bitmap.Config.ARGB_8888);
 //                        }
+//                        SurfaceTexture surfaceTexture=new SurfaceTexture(1);
 
-//                        while (!videoCodec.display(holder.getSurface()));
-                        videoCodec.play(holder.getSurface());
+                        while (!videoCodec.display(holder.getSurface()));
+//                        videoCodec.play(holder.getSurface());
                        /* byte[] frame = videoCodec.getNextFrame();
                         while (frame!=null) {
 
@@ -93,11 +105,6 @@ public class PlayActivity extends AppCompatActivity {
             }
 
             @Override
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-
-            }
-
-            @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
 
             }
@@ -108,6 +115,8 @@ public class PlayActivity extends AppCompatActivity {
     }
 
     public native int play(Object surface);
+
+
 
 
 
