@@ -21,8 +21,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         init();
+//        Bitmap.createBitmap(22,33, Bitmap.Config.ARGB_8888)
     }
     private void init() {
         protocol = (Button) findViewById(R.id.btn_protocol);

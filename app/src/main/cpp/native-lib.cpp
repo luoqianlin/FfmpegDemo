@@ -133,9 +133,11 @@ void print_error(const char *filename, int err)
         errbuf_ptr = strerror(AVUNERROR(err));
     av_log(NULL, AV_LOG_ERROR, "%s: %s\n", filename, errbuf_ptr);
 }
-bool save_pic(AVFrame *frm, AVPixelFormat pfmt, AVCodecID cid, const char* filename, int width, int height);
+bool save_pic(AVFrame *frm, AVCodecContext *pCodecCtx, AVCodecID cid, const char* filename);
 #include <string>
 int convert_first_frame_to_png(std::string const & inputVideoFileName, std::string const & outputPngName);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 JNIEXPORT jint JNICALL
 Java_cn_test_ffmpegdemo_PlayActivity_play(JNIEnv *env, jobject instance, jobject surface) {
     LOGD("play");
@@ -145,7 +147,7 @@ Java_cn_test_ffmpegdemo_PlayActivity_play(JNIEnv *env, jobject instance, jobject
     AVCodec *codec;
     // sd卡中的视频文件地址,可自行修改或者通过jni传入
     //char *file_name = "/storage/emulated/0/ws2.mp4";
-    const char *file_name = "/sdcard/08.Java多线程.mp4";
+    const char *file_name = "/sdcard/Wildlife.wmv";
 //    std::string file_out_name="/sdcard/xx_first_frame.png";
 //    convert_first_frame_to_png(std::string(file_name),file_out_name);
 
@@ -238,8 +240,7 @@ Java_cn_test_ffmpegdemo_PlayActivity_play(JNIEnv *env, jobject instance, jobject
 
     // Determine required buffer size and allocate buffer
     // buffer中数据就是用于渲染的,且格式为RGBA
-    int numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGBA, avctx->width, avctx->height,
-                                            1);
+    int numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGBA, avctx->width, avctx->height,1);
     uint8_t *buffer = (uint8_t *) av_malloc(numBytes * sizeof(uint8_t));
     av_image_fill_arrays(pFrameRGBA->data, pFrameRGBA->linesize, buffer, AV_PIX_FMT_RGBA,
                          avctx->width, avctx->height, 1);
@@ -251,7 +252,7 @@ Java_cn_test_ffmpegdemo_PlayActivity_play(JNIEnv *env, jobject instance, jobject
                                                 avctx->width,
                                                 avctx->height,
                                                 AV_PIX_FMT_RGBA,
-                                                SWS_BILINEAR,
+                                                SWS_BICUBIC,
                                                 NULL,
                                                 NULL,
                                                 NULL);
@@ -287,6 +288,7 @@ Java_cn_test_ffmpegdemo_PlayActivity_play(JNIEnv *env, jobject instance, jobject
                 int dstStride = windowBuffer.stride * 4;
                 uint8_t *src = (pFrameRGBA->data[0]);
                 int srcStride = pFrameRGBA->linesize[0];
+                LOGI("width:%d,height:%d,linesize:%d",avctx->width,avctx->height,pFrameRGBA->linesize[0]);
 
                 // 由于window的stride和帧的stride不同,因此需要逐行复制
                 int h;
@@ -306,15 +308,14 @@ Java_cn_test_ffmpegdemo_PlayActivity_play(JNIEnv *env, jobject instance, jobject
 //                fclose(outPng);
 //                av_free(buffer);
 //                LOGE("format:%d,%d",pFrameRGBA->format,pFrame->format);
-                if (t_t % 30 == 0) {
-                    struct timeval tv;
-                    gettimeofday(&tv, NULL);
-                    char filename[50];
-                    sprintf(filename, "%s%ld.png", "/sdcard/xxx___", tv.tv_usec);
-                    LOGE("format:%d",pFrame->format);
-                    save_pic(pFrame,AV_PIX_FMT_RGB24, AV_CODEC_ID_PNG, filename, avctx->width,
-                             avctx->height);
-                }
+//                if (t_t % 30 == 0) {
+//                    struct timeval tv;
+//                    gettimeofday(&tv, NULL);
+//                    char filename[50];
+//                    sprintf(filename, "%s%ld.png", "/sdcard/xxx___", tv.tv_usec);
+//                    LOGE("format:%d",pFrameRGBA->format);
+//                    save_pic(pFrame,avctx, AV_CODEC_ID_PNG, filename);
+//                }
                 ANativeWindow_unlockAndPost(nativeWindow);
                 t_t++;
             }
@@ -350,14 +351,14 @@ Java_cn_test_ffmpegdemo_PlayActivity_play(JNIEnv *env, jobject instance, jobject
         for (h = 0; h < videoHeight; h++) {
             memcpy(dst + h * dstStride, src + h * srcStride, srcStride);
         }
-        if (t_t % 30 == 0) {
-            struct timeval tv;
-            gettimeofday(&tv, NULL);
-            char filename[50];
-            sprintf(filename, "%s%ld.png", "/sdcard/xxx___", tv.tv_usec);
-            save_pic(pFrame, AV_PIX_FMT_RGB24, AV_CODEC_ID_PNG, filename, avctx->width,
-                     avctx->height);
-        }
+//        if (t_t % 30 == 0) {
+//            struct timeval tv;
+//            gettimeofday(&tv, NULL);
+//            char filename[50];
+//            sprintf(filename, "%s%ld.png", "/sdcard/xxx___", tv.tv_usec);
+//            save_pic(pFrame, AV_PIX_FMT_RGB24, AV_CODEC_ID_PNG, filename, avctx->width,
+//                     avctx->height);
+//        }
         ANativeWindow_unlockAndPost(nativeWindow);
 
     }
@@ -380,9 +381,12 @@ Java_cn_test_ffmpegdemo_PlayActivity_play(JNIEnv *env, jobject instance, jobject
 
 
 }
+#pragma clang diagnostic pop
 
 #define CHECK_ERR(ERR) {if ((ERR)<0) return -1; }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 int convert_first_frame_to_png(std::string const & inputVideoFileName, std::string const & outputPngName)
 {
     av_register_all();
@@ -469,7 +473,9 @@ int convert_first_frame_to_png(std::string const & inputVideoFileName, std::stri
             av_frame_free(&frame);
         }
     }
+    return 0;
 }
+#pragma clang diagnostic pop
 
 
 #ifdef __cplusplus
@@ -487,12 +493,13 @@ Java_cn_test_ffmpegdemo_MainActivity_getfirstframe(JNIEnv *env, jobject instance
 
 }
 
-bool save_pic(AVFrame *frm, AVPixelFormat pfmt, AVCodecID cid, const char* filename, int width, int height)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+bool save_pic(AVFrame *frm,  AVCodecContext *  pCodecCtx, AVCodecID cid, const char* filename)
 {
-    int outbuf_size = width * height*4;
-    uint8_t * outbuf = (uint8_t*)malloc(outbuf_size);
+    int outbuf_size = avpicture_get_size(pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height);;
+    uint8_t * outbuf =(uint8_t *) malloc(outbuf_size)   ;
     int got_pkt = 0;
-
     FILE* pf;
     pf = fopen(filename, "wb");
     if (pf == NULL)
@@ -504,22 +511,24 @@ bool save_pic(AVFrame *frm, AVPixelFormat pfmt, AVCodecID cid, const char* filen
     if (!pCodecRGB24)
         return false;
     ctx = avcodec_alloc_context3(pCodecRGB24);
-    ctx->bit_rate = 3000000;
-    ctx->width = width;
-    ctx->height = height;
-    AVRational rate;
-    rate.num = 1;
-    rate.den = 25;
-    ctx->time_base = rate;
-    ctx->gop_size = 10;
-    ctx->max_b_frames = 0;
-    ctx->thread_count = 1;
-    ctx->pix_fmt = pfmt;
+    ctx->bit_rate = pCodecCtx->bit_rate;
+    ctx->width = pCodecCtx->width;
+    ctx->height = pCodecCtx->height;
+    ctx->pix_fmt = pCodecCtx->pix_fmt;
+    ctx->codec_id = cid;
+    ctx->codec_type = AVMEDIA_TYPE_VIDEO;
+    LOGI("pCodecCtx->time_base.num:%d",pCodecCtx->time_base.num);
+    ctx->time_base.num = 1;
+    ctx->time_base.den = pCodecCtx->time_base.den;
 
 
     int ret = avcodec_open2(ctx, pCodecRGB24, NULL);
-    if (ret < 0)
-        return false;
+    if (ret < 0) {
+        char errorMsg[1024];
+        av_strerror(ret, errorMsg, 1024);
+        LOGE("Couldn't open codec:%d(%s)\n",ret, errorMsg);
+        goto end;
+    }
 
 //  int size = ctx->width * ctx->height * 4;
     av_init_packet(&pkt);
@@ -537,6 +546,10 @@ bool save_pic(AVFrame *frm, AVPixelFormat pfmt, AVCodecID cid, const char* filen
     {
         return false;
     }
+    end:
+    avcodec_close(ctx);
+    free(outbuf);
     fclose(pf);
     return true;
 }
+#pragma clang diagnostic pop
