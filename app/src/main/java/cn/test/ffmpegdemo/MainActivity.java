@@ -11,6 +11,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private Button protocol,format,codec,filter,btn_play,btn_getfirstframe;
     private TextView tv_info;
+    private Button btn_surface;
+    private Button btn_texture;
 
     // Used to load the 'native-lib' library on application startup.
     static {
@@ -33,12 +35,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_play=findViewById(R.id.btn_play);
         btn_getfirstframe=findViewById(R.id.btn_getfirstframe);
 
+        btn_surface=findViewById(R.id.btn_surface);
+        btn_texture=findViewById(R.id.btn_texture);
         protocol.setOnClickListener(this);
         format.setOnClickListener(this);
         codec.setOnClickListener(this);
         filter.setOnClickListener(this);
         btn_play.setOnClickListener(this);
         btn_getfirstframe.setOnClickListener(this);
+        btn_surface.setOnClickListener(this);
+        btn_texture.setOnClickListener(this);
     }
     /**
      * A native method that is implemented by the 'native-lib' native library,
@@ -74,6 +80,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btn_getfirstframe:
                 getfirstframe();
+                break;
+            case R.id.btn_texture:
+                startActivity(new Intent(this,TextureActivity.class));
+                break;
+            case R.id.btn_surface:
+                startActivity(new Intent(this, GLSurfaceActivity.class));
                 break;
             default:
                 break;

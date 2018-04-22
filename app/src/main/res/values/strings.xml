@@ -1,4 +1,6 @@
 <resources>
     <string name="app_name">FfmpegDemo</string>
     <string name="title_activity_play">PlayActivity</string>
+    <string name="title_activity_glsurface">GLSurfaceActivity</string>
+    <string name="title_activity_texture">TextureActivity</string>
 </resources>

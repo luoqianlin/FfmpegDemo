@@ -6,6 +6,7 @@
 #define FFMPEGDEMO_VIDEO_CODEC_H
 
 #include <string>
+#include <iostream>
 #include <unistd.h>
 
 #include <jni.h>
@@ -46,6 +47,8 @@ extern "C" {
 #include <libswscale/swscale.h>
 #include <libavutil/imgutils.h>
 #include <libswresample/swresample.h>
+
+#include <libavcodec/jni.h>
 
 #ifdef __cplusplus
 }
