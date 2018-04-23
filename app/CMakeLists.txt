@@ -20,7 +20,6 @@ add_library( # Sets the name of the library.
               src/main/cpp/native-lib.cpp
               src/main/cpp/video_codec.cpp
               src/main/cpp/shaderUtils.cpp
-              src/main/cpp/yuv_simple.cpp
 
              )
 add_library(
@@ -316,10 +315,4 @@ target_link_libraries( # Specifies the target library.
                        ${android-lib}
                        ${EGL-lib}
                        ${GLES2-lib}
-                       cutils
-                       utils
-                       binder
-                       ui
-                       gui
-                       stagefright_foundation
                        )

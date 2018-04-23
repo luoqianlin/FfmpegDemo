@@ -52,6 +52,8 @@ extern "C" {
 
 #ifdef __cplusplus
 }
+#endif
+
 using namespace std;
 
 class VideoCodec{
@@ -61,10 +63,12 @@ private :
     AVFormatContext *ic;
     AVCodecContext *avctx;
     int stream_index;
+    int video_width;
+    int video_height;
 public:
     VideoCodec();
     ~VideoCodec();
-    int init(const string inpput_file);
+    int init(const string inpput_file,const int video_width,const int video_height);
     int release();
     int decode_next_frame(char* &buffer,size_t &buff_len);
     int decode_next_frame(JNIEnv *env,jobject surface);
@@ -73,5 +77,5 @@ public:
 
 };
 
-#endif
+
 #endif //FFMPEGDEMO_VIDEO_CODEC_H

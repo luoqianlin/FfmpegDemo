@@ -96,7 +96,7 @@
 
     <ScrollView
         android:layout_width="368dp"
-        android:layout_height="293dp"
+        android:layout_height="206dp"
         android:layout_marginBottom="8dp"
         android:padding="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -108,7 +108,7 @@
             android:id="@+id/tv_info"
 
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"/>
     </ScrollView>
 
     <Button
@@ -120,6 +120,29 @@
         android:text="Texture"
         app:layout_constraintStart_toEndOf="@+id/btn_surface"
         app:layout_constraintTop_toBottomOf="@+id/btn_play" />
+
+    <Button
+        android:id="@+id/btn_gl"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="8dp"
+        android:text="yuv->gl"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.09"
+        app:layout_constraintStart_toEndOf="@+id/btn_texture"
+        app:layout_constraintTop_toBottomOf="@+id/btn_getfirstframe"/>
+
+    <Button
+        android:id="@+id/btn_media_codec"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
+        android:text="MediaCodec"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btn_surface"/>
 
 
 </android.support.constraint.ConstraintLayout>

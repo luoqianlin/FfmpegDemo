@@ -1,13 +1,15 @@
 package cn.test.ffmpegdemo;
 
 import android.content.Context;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.util.AttributeSet;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 public class VideoSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
-    String videoPath = "/storage/emulated/0/360/80s.mp4";
+    String videoPath = "/sdcard/Wildlife.wmv";
     public SurfaceHolder surfaceHolder;
 
     public VideoSurfaceView(Context context) {
@@ -17,6 +19,17 @@ public class VideoSurfaceView extends SurfaceView implements SurfaceHolder.Callb
 
     public VideoSurfaceView(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
+        init();
+    }
+
+    public VideoSurfaceView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        init();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public VideoSurfaceView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+        super(context, attrs, defStyleAttr, defStyleRes);
         init();
     }
 

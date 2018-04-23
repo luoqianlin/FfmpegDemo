@@ -18,4 +18,18 @@
 
 #define  AV_LOGE(...) __android_log_print(ANDROID_LOG_ERROR, AV_LOG_TAG, __VA_ARGS__)
 
+#define INTERVAL_MS(start,end)  (((end)-(start))/1000.0)
+
+inline long current_time_usec() {
+    struct timeval t;
+    if(gettimeofday(&t, NULL)!=0){
+        perror("gettimeofday error");
+        return -1;
+    }
+    return t.tv_sec*1000000+t.tv_usec;
+}
+
+
+
+
 #endif //FFMPEGDEMO_LOG_H

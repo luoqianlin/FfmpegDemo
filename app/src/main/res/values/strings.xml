@@ -3,4 +3,5 @@
     <string name="title_activity_play">PlayActivity</string>
     <string name="title_activity_glsurface">GLSurfaceActivity</string>
     <string name="title_activity_texture">TextureActivity</string>
+    <string name="title_activity_gl_play">GlPlayActivity</string>
 </resources>

@@ -28,6 +28,7 @@ public class VideoCodec {
 
 
     private native int init(long ptr,String file);
+    private native int init(long ptr,String file,int videoWidth,int videoHeight);
 
 
     private native byte[] getNextFrame(long ptr);
@@ -49,7 +50,11 @@ public class VideoCodec {
     }
 
     public int init() {
-        return init(this.ptr,this.file);
+        return init(this.ptr, this.file);
+    }
+
+    public int init(int videoWidth, int videoHeight) {
+        return init(this.ptr, this.file, videoWidth, videoHeight);
     }
 
     public String getFile() {

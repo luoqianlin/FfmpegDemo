@@ -554,4 +554,3 @@ bool save_pic(AVFrame *frm,  AVCodecContext *  pCodecCtx, AVCodecID cid, const c
 }
 #pragma clang diagnostic pop
 
-

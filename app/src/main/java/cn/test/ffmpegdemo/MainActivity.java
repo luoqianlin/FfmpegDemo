@@ -13,6 +13,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView tv_info;
     private Button btn_surface;
     private Button btn_texture;
+    private Button btn_media_codec;
+
+    private Button btnGl;
 
     // Used to load the 'native-lib' library on application startup.
     static {
@@ -34,6 +37,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tv_info = (TextView) findViewById(R.id.tv_info);
         btn_play=findViewById(R.id.btn_play);
         btn_getfirstframe=findViewById(R.id.btn_getfirstframe);
+        btnGl=findViewById(R.id.btn_gl);
+        btn_media_codec=findViewById(R.id.btn_media_codec);
 
         btn_surface=findViewById(R.id.btn_surface);
         btn_texture=findViewById(R.id.btn_texture);
@@ -45,6 +50,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_getfirstframe.setOnClickListener(this);
         btn_surface.setOnClickListener(this);
         btn_texture.setOnClickListener(this);
+        btnGl.setOnClickListener(this);
+        btn_media_codec.setOnClickListener(this);
     }
     /**
      * A native method that is implemented by the 'native-lib' native library,
@@ -86,6 +93,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btn_surface:
                 startActivity(new Intent(this, GLSurfaceActivity.class));
+                break;
+            case R.id.btn_gl:
+                startActivity(new Intent(this,GlPlayActivity.class));
+                break;
+            case R.id.btn_media_codec:
+                startActivity(new Intent(this,MediaCodecActivity.class));
                 break;
             default:
                 break;

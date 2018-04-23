@@ -50,13 +50,15 @@ VideoCodec::VideoCodec() {
     this->avctx = NULL;
     this->ic = NULL;
     this->stream_index = -1;
+    this->video_width=0;
+    this->video_height=0;
 }
 
 VideoCodec::~VideoCodec() {
     this->release();
 }
 
-int VideoCodec::init(const string input_file) {
+int VideoCodec::init(const string input_file,const int video_width,const int video_height) {
     AVFormatContext *ic;
     AVCodecContext *avctx;
     AVCodec *codec;
@@ -85,6 +87,9 @@ int VideoCodec::init(const string input_file) {
         if (ic->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO
             && stream_index < 0) {
             stream_index = i;
+            AVStream *stream=ic->streams[stream_index];
+            int frame_rate=stream->avg_frame_rate.num/stream->avg_frame_rate.den;//每秒多少帧
+            LOGI("fps:%d",frame_rate);
         }
     }
     if (stream_index == -1) {
@@ -122,6 +127,8 @@ int VideoCodec::init(const string input_file) {
     this->ic = ic;
     this->avctx = avctx;
     this->stream_index = stream_index;
+    this->video_height=video_height;
+    this->video_width=video_width;
     return 0;
 }
 
@@ -265,7 +272,7 @@ int VideoCodec::decode_next_frame_tobitmap(JNIEnv * env,jobject bitmap) {
                          info.width, info.height, 1);
     int target_width = 320;
     int target_height = 240;
-    LOGI("taget_width:%d,taget_height=%d,src pix_fmt:%d",info.width,info.height,avctx->pix_fmt);
+//    LOGI("taget_width:%d,taget_height=%d,src pix_fmt:%d",info.width,info.height,avctx->pix_fmt);
     // 由于解码出来的帧格式不是RGBA的,在渲染之前需要进行格式转换
     struct SwsContext *sws_ctx = sws_getContext(avctx->width,
                                                 avctx->height,
@@ -307,12 +314,12 @@ int VideoCodec::decode_next_frame_tobitmap(JNIEnv * env,jobject bitmap) {
                           pFrameRGBA->data, pFrameRGBA->linesize);
 
 //              LOGI("width:%d,height:%d,linesize:%d", avctx->width, avctx->height,pFrameRGBA->linesize[0]);
-              LOGI("dest_width:%d,dest_height:%d,dest_linesize:%d", pFrameRGBA->width,
-                   pFrameRGBA->height,pFrameRGBA->linesize[0]);
+//              LOGI("dest_width:%d,dest_height:%d,dest_linesize:%d", pFrameRGBA->width,
+//                   pFrameRGBA->height,pFrameRGBA->linesize[0]);
 
 //                fill_bitmap(&info, pixels, pFrameRGBA);
                 clock_t  copy_start=clock();
-                LOGI("YUV430p->RGB cost:%d",(copy_start-t1));
+//                LOGI("YUV430p->RGB cost:%d",(copy_start-t1));
                 memcpy(pixels,pFrameRGBA->data[0],info.height*pFrameRGBA->linesize[0]);
                 clock_t  t2=clock();
                 LOGI("fill bitmap cost totalTime:%d,total:%d",t2-copy_start,t2-t1);
@@ -516,9 +523,10 @@ int VideoCodec::decode_play(JNIEnv *env,jobject surface) {
 //    int videoWidth = avctx->width;
 //    int videoHeight = avctx->height;
 //使用上面的格式，根据Android窗口，对显示进行拉伸
-    uint32_t window_width  = (uint32_t) ANativeWindow_getWidth(nativeWindow);
-    uint32_t window_height = (uint32_t) ANativeWindow_getWidth(nativeWindow);
+    uint32_t window_width  = static_cast<uint32_t>(this->video_width);
+    uint32_t window_height = static_cast<uint32_t>(this->video_height);
     // 设置native window的buffer大小,可自动拉伸
+    LOGI("window_width:%d,window_height:%d",window_width,window_height);
     ANativeWindow_setBuffersGeometry(nativeWindow, window_width, window_height,WINDOW_FORMAT_RGBA_8888);
     ANativeWindow_Buffer windowBuffer;
 
@@ -530,6 +538,7 @@ int VideoCodec::decode_play(JNIEnv *env,jobject surface) {
     pFrameRGBA->height=window_height;
     av_image_fill_arrays(pFrameRGBA->data, pFrameRGBA->linesize, buffer, AV_PIX_FMT_RGBA,
                          window_width,window_height, 1);
+    LOGI("pix_fmt:%d",avctx->pix_fmt);
     // 由于解码出来的帧格式不是RGBA的,在渲染之前需要进行格式转换
     struct SwsContext *sws_ctx = sws_getContext(avctx->width,
                                                 avctx->height,
@@ -549,7 +558,7 @@ int VideoCodec::decode_play(JNIEnv *env,jobject surface) {
         // Is this a packet from the video stream?
         if (pkt->stream_index == stream_index) {
             // Decode video frame
-            clock_t t1=clock();
+//            clock_t t1=clock();
             ret = avcodec_decode_video2(avctx, pFrame, &got_picture, pkt);
             if (ret < 0) {
                 print_av_error(ret);
@@ -570,28 +579,34 @@ int VideoCodec::decode_play(JNIEnv *env,jobject surface) {
                               const int srcStride[], int srcSliceY, int srcSliceH,
                               uint8_t *const dst[], const int dstStride[]);
                  * */
-                clock_t  tt1=clock();
+//                clock_t  tt1=clock();
+                long start=current_time_usec();
                 // 格式转换
-//                sws_scale(sws_ctx, (uint8_t const *const *) pFrame->data,
-//                          pFrame->linesize, 0, avctx->height,
-//                          pFrameRGBA->data, pFrameRGBA->linesize);
-                clock_t  tt2=clock();
-                LOGI("scale:%d",(tt2-tt1));
+                sws_scale(sws_ctx, (uint8_t const *const *) pFrame->data,
+                          pFrame->linesize, 0, avctx->height,
+                          pFrameRGBA->data, pFrameRGBA->linesize);
+//                clock_t  tt2=clock();
+                long end=current_time_usec();
+
+                LOGI("scale:%.2f",INTERVAL_MS(start,end));
                 // 获取stride
                 uint8_t *dst = (uint8_t *) windowBuffer.bits;
                 int dstStride = windowBuffer.stride * 4;
                 uint8_t *src = (pFrameRGBA->data[0]);
                 int srcStride = pFrameRGBA->linesize[0];
 //                LOGI("width:%d,height:%d,linesize:%d",avctx->width,avctx->height,pFrameRGBA->linesize[0]);
-                clock_t  c_s=clock();
+//                clock_t  c_s=clock();
+                long start_1=current_time_usec();
                 // 由于window的stride和帧的stride不同,因此需要逐行复制
                 int h;
-//                for (h = 0; h < window_height; h++) {
-//                    memcpy(dst + h * dstStride, src + h * srcStride, srcStride);
-//                }
+                for (h = 0; h < window_height; h++) {
+                    memcpy(dst + h * dstStride, src + h * srcStride, srcStride);
+                }
 //                memcpy(dst,src,pFrameRGBA->height*pFrameRGBA->linesize[0]);
-                clock_t t2=clock();
-                LOGI("copy cost:%d,ANativeWindow cost TotalTime:%d",t2-c_s,t2-t1);
+//                clock_t t2=clock();
+                long end_1=current_time_usec();
+                LOGI("copy cost:%.2f,ANativeWindow cost TotalTime:%.2f",INTERVAL_MS(start_1,end_1),
+                     INTERVAL_MS(start,end_1));
                 ANativeWindow_unlockAndPost(nativeWindow);
             }
 
@@ -657,9 +672,25 @@ Java_com_sansi_va_VideoCodec_init__JLjava_lang_String_2(JNIEnv *env, jobject ins
     int ret;
     const char *file = env->GetStringUTFChars(file_, 0);
     LOGD("init file:%s", file);
-    ret = (reinterpret_cast<VideoCodec *>(ptr))->init(string(file));
+    ret = (reinterpret_cast<VideoCodec *>(ptr))->init(string(file),0,0);
     env->ReleaseStringUTFChars(file_, file);
     return ret;
+}
+
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_sansi_va_VideoCodec_init__JLjava_lang_String_2II(JNIEnv *env, jobject instance, jlong ptr,
+                                                          jstring file_, jint videoWidth,
+                                                          jint videoHeight) {
+    int ret;
+    const char *file = env->GetStringUTFChars(file_, 0);
+    LOGD("init file:%s,videoWidth:%d,videoHeight:%d", file,videoWidth,videoHeight);
+    ret = (reinterpret_cast<VideoCodec *>(ptr))->init(string(file),videoWidth,videoHeight);
+    env->ReleaseStringUTFChars(file_, file);
+    return ret;
+
+    env->ReleaseStringUTFChars(file_, file);
 }
 
 
@@ -1010,7 +1041,6 @@ Java_cn_test_ffmpegdemo_VideoSurfaceView_videoPlay(JNIEnv *env, jobject instance
 jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
     LOGI("ffmpeg JNI_OnLoad");
-
     av_jni_set_java_vm(vm, reserved);
     return JNI_VERSION_1_6;
 }
