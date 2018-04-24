@@ -38,7 +38,7 @@ public class Triangle {
     };
 
     // Set color with red, green, blue and alpha (opacity) values
-    float color[] = { 255, 0, 0, 1.0f };
+    float color[] = { 255,255, 0, 1.0f };
 
     public Triangle() {
        // 初始化ByteBuffer，长度为arr数组的长度*4，因为一个float占4个字节
@@ -52,10 +52,8 @@ public class Triangle {
         // 设置缓冲区来读取第一个坐标
         vertexBuffer.position(0);
 
-        int vertexShader = ShaderUtils.loadShader(GLES20.GL_VERTEX_SHADER,
-                vertexShaderCode);
-        int fragmentShader = ShaderUtils.loadShader(GLES20.GL_FRAGMENT_SHADER,
-                fragmentShaderCode);
+        int vertexShader = ShaderUtils.loadShader(GLES20.GL_VERTEX_SHADER,vertexShaderCode);
+        int fragmentShader = ShaderUtils.loadShader(GLES20.GL_FRAGMENT_SHADER,fragmentShaderCode);
 
         // create empty OpenGL ES Program
         mProgram = GLES20.glCreateProgram();
@@ -79,7 +77,6 @@ public class Triangle {
     public void draw(float[] mvpMatrix) {
         // Add program to OpenGL ES environment
         GLES20.glUseProgram(mProgram);
-
         // get handle to vertex shader's vPosition member
         mPositionHandle = GLES20.glGetAttribLocation(mProgram, "vPosition");
 
@@ -110,7 +107,6 @@ public class Triangle {
 
         // Draw the triangle
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, vertexCount);
-
         // Disable vertex array
         GLES20.glDisableVertexAttribArray(mPositionHandle);
     }

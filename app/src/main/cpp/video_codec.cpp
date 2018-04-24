@@ -931,8 +931,7 @@ Java_cn_test_ffmpegdemo_VideoSurfaceView_videoPlay(JNIEnv *env, jobject instance
     glGenTextures(1,&yTextureId);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,yTextureId);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,
-                    GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 
@@ -941,8 +940,7 @@ Java_cn_test_ffmpegdemo_VideoSurfaceView_videoPlay(JNIEnv *env, jobject instance
     glGenTextures(1,&uTextureId);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D,uTextureId);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,
-                    GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     glUniform1i(textureSamplerHandleU,1);
@@ -950,8 +948,7 @@ Java_cn_test_ffmpegdemo_VideoSurfaceView_videoPlay(JNIEnv *env, jobject instance
     glGenTextures(1,&vTextureId);
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D,vTextureId);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,
-                    GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     glUniform1i(textureSamplerHandleV,2);

@@ -7,6 +7,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import gl.GlDemoActivity;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private Button protocol,format,codec,filter,btn_play,btn_getfirstframe;
@@ -16,6 +18,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button btn_media_codec;
 
     private Button btnGl;
+
+    private Button btn_gl_demo;
 
     // Used to load the 'native-lib' library on application startup.
     static {
@@ -40,6 +44,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnGl=findViewById(R.id.btn_gl);
         btn_media_codec=findViewById(R.id.btn_media_codec);
 
+        btn_gl_demo=findViewById(R.id.btn_gl_demo);
+
         btn_surface=findViewById(R.id.btn_surface);
         btn_texture=findViewById(R.id.btn_texture);
         protocol.setOnClickListener(this);
@@ -52,7 +58,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_texture.setOnClickListener(this);
         btnGl.setOnClickListener(this);
         btn_media_codec.setOnClickListener(this);
+        btn_gl_demo.setOnClickListener(this);
     }
+
     /**
      * A native method that is implemented by the 'native-lib' native library,
      * which is packaged with this application.
@@ -99,6 +107,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btn_media_codec:
                 startActivity(new Intent(this,MediaCodecActivity.class));
+                break;
+            case R.id.btn_gl_demo:
+                startActivity(new Intent(this, GlDemoActivity.class));
                 break;
             default:
                 break;

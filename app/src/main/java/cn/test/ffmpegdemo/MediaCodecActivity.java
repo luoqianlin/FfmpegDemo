@@ -3,7 +3,6 @@ package cn.test.ffmpegdemo;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
-import android.media.MediaFormat;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -27,7 +26,7 @@ public class MediaCodecActivity extends AppCompatActivity {
 
     public void start(View v) throws IOException {
         MediaCodec mediaCodec = MediaCodec.createByCodecName("");
-        mediaCodec.configure(MediaFormat.createVideoFormat());
+//        mediaCodec.configure(MediaFormat.createVideoFormat());
     }
 
     public void codecInfo(View v){
