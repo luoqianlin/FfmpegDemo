@@ -88,7 +88,12 @@ int VideoCodec::init(const string input_file,const int video_width,const int vid
             && stream_index < 0) {
             stream_index = i;
             AVStream *stream=ic->streams[stream_index];
-            int frame_rate=stream->avg_frame_rate.num/stream->avg_frame_rate.den;//每秒多少帧
+            AVRational avRational=stream->avg_frame_rate;
+            LOGI("rate.num:%d,rate.den:%d",avRational.num,avRational.den);
+            int frame_rate=0;
+            if (avRational.den != 0) {
+                frame_rate = stream->avg_frame_rate.num / stream->avg_frame_rate.den;//每秒多少帧
+            }
             LOGI("fps:%d",frame_rate);
         }
     }
@@ -1035,9 +1040,86 @@ Java_cn_test_ffmpegdemo_VideoSurfaceView_videoPlay(JNIEnv *env, jobject instance
     env->ReleaseStringUTFChars(path_, path);
 }
 
+int VideoCodec::decode_next_frame(AVFrame *yuvFrame) {
+
+    int y_size =this->avctx->width * this->avctx->height;
+    AVPacket *pkt = (AVPacket *) malloc(sizeof(AVPacket));
+    av_new_packet(pkt, y_size);
+    /***
+     * 开始解码
+     * **/
+    int ret;
+    while (1) {
+        if (av_read_frame(this->ic, pkt) < 0) {
+            return AVERROR_EOF;
+        }
+        if (pkt->stream_index == this->stream_index) {
+            ret = avcodec_send_packet(this->avctx, pkt);
+            if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
+                av_packet_unref(pkt);
+                continue;
+            }
+
+            ret = avcodec_receive_frame(this->avctx, yuvFrame);
+            if (ret < 0 && ret != AVERROR_EOF) {
+                av_packet_unref(pkt);
+                continue;
+            }
+            av_packet_unref(pkt);
+            break;
+        }
+        av_packet_unref(pkt);
+    }
+    return 0;
+}
+
+extern "C"
+JNIEXPORT jobject JNICALL
+Java_com_sansi_va_VideoCodec_nextFrame__J(JNIEnv *env, jobject instance, jlong ptr) {
+    AVFrame *yuvFrame = av_frame_alloc();
+    int ret = (reinterpret_cast<VideoCodec *>(ptr))->decode_next_frame(yuvFrame);
+    if (ret == AVERROR_EOF) {
+        LOGI("frame 结束");
+        return NULL;
+    }
+    jclass clazz_vaFrame = env->FindClass("com/sansi/va/VAFrame");
+    jmethodID mid_vaFrame = env->GetMethodID(clazz_vaFrame, "<init>", "()V");
+    jobject avFrame = env->NewObject(clazz_vaFrame, mid_vaFrame);
+    jmethodID setWidth_id = env->GetMethodID(clazz_vaFrame, "setWidth", "(I)V");
+    jmethodID setHeight_id = env->GetMethodID(clazz_vaFrame, "setHeight", "(I)V");
+    jmethodID setLinesize_id = env->GetMethodID(clazz_vaFrame, "setLinesize", "([I)V");
+    jmethodID setData_id = env->GetMethodID(clazz_vaFrame, "setData", "([Ljava/nio/Buffer;)V");
+
+    jfieldID ptr_id = env->GetFieldID(clazz_vaFrame, "ptr", "J");
+
+    env->CallVoidMethod(avFrame,setWidth_id,yuvFrame->width);
+    env->CallVoidMethod(avFrame,setHeight_id,yuvFrame->height);
+
+    jintArray linesize_arr = env->NewIntArray(AV_NUM_DATA_POINTERS);
+    env->SetIntArrayRegion(linesize_arr,0,AV_NUM_DATA_POINTERS,yuvFrame->linesize);
+    env->CallVoidMethod(avFrame,setLinesize_id,linesize_arr);
+    jobjectArray byteBufferArray = env->NewObjectArray(AV_NUM_DATA_POINTERS, env->FindClass("java/nio/Buffer"), NULL);
+    for(int i=0;i<AV_NUM_DATA_POINTERS;i++){
+        jobject byteBuffer = env->NewDirectByteBuffer(yuvFrame->data[i], yuvFrame->linesize[i]);
+        env->SetObjectArrayElement(byteBufferArray,i,byteBuffer);
+    }
+    env->CallVoidMethod(avFrame,setData_id,byteBufferArray);
+    env->SetLongField(avFrame,ptr_id,(jlong)yuvFrame);
+//    LOGI("ptr:%p",yuvFrame);
+//    av_frame_free(&yuvFrame);
+    return avFrame;
+}
+
 jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
     LOGI("ffmpeg JNI_OnLoad");
     av_jni_set_java_vm(vm, reserved);
     return JNI_VERSION_1_6;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_sansi_va_VAFrame_destory__J(JNIEnv *env, jobject instance, jlong ptr) {
+    AVFrame *yuvFrame= reinterpret_cast<AVFrame *>(ptr);
+    av_frame_free(&yuvFrame);
 }

@@ -1,10 +1,6 @@
 package cn.test.ffmpegdemo;
 
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -59,7 +55,7 @@ public class PlayActivity extends AppCompatActivity {
                     @Override
                     public void run() {
 //                        play(holder.getSurface());
-                        videoCodec=new VideoCodec("/sdcard/Wildlife.wmv");
+                        videoCodec=new VideoCodec("/sdcard/2017-07-30 13-36-26屏幕截图.png");
                         videoCodec.open();
                         int retV = videoCodec.init(width,height);
                         System.out.println("videoCodec ret:"+retV);
@@ -126,150 +122,150 @@ public class PlayActivity extends AppCompatActivity {
             }
         });
 
-
-        sv1.getHolder().addCallback(new SurfaceHolder.Callback() {
-            private volatile boolean isfinished;
-            @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-
-            }
-
-            @Override
-            public void surfaceChanged(final SurfaceHolder holder, final int format, final int width, final int height) {
-               /* new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        videoCodec2=new VideoCodec("/sdcard/Wildlife.wmv");
-                        videoCodec2.open();
-                        int retV = videoCodec2.init();
-                        System.out.println("videoCodec ret:"+retV);
-                        Bitmap bitmap = Bitmap.createBitmap(1280, 720, Bitmap.Config.ARGB_8888);
-                        boolean b = !videoCodec2.fillBitmap(bitmap);
-
-                        while (b){
-                            Canvas canvas = holder.lockCanvas();
-                            long start=System.currentTimeMillis();
-//                            canvas.drawColor(Color.BLACK);
-                            Paint paint = new Paint();
-                            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-                            canvas.drawPaint(paint);
-                            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
-                            canvas.drawBitmap(bitmap,0,0,null);
-                            long end=System.currentTimeMillis();
-                            Log.e("VideCodec","draw coast:"+(end-start));
-                            holder.unlockCanvasAndPost(canvas);
-//                            bitmap = Bitmap.createBitmap(1280, 720, Bitmap.Config.ARGB_8888);
-                            b = !videoCodec2.fillBitmap(bitmap);
-                            long end1=System.currentTimeMillis();
-                            Log.e("VideCodec","get bitmap cost:"+(end1-end));
-                        }
-
-                        videoCodec2.close();
-                    }
-                }).start();*/
-
-               Log.i("Main:","width:"+width+" height:"+height);
-
-                new Thread(new Runnable() {
-
-
-
-                    @Override
-                    public void run() {
-                        videoCodec2=new VideoCodec("/sdcard/Wildlife.wmv");
-                        videoCodec2.open();
-                        int retV = videoCodec2.init();
-                        System.out.println("videoCodec ret:"+retV);
-                        long startTime = System.currentTimeMillis();
-                        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                        isfinished = videoCodec2.fillBitmap(bitmap);
-
-                        Frame frame = new Frame();
-                        frame.bitmap = bitmap;
-                        frame.isDrawed = false;
-
-                        while (!isfinished){
-
-                            synchronized (frames){
-                                frame.isDrawed=false;
-                                while (currentBufferSize >= FRAME_BUFFER_SIZE) {
-                                    try {
-                                        Log.e("Main","currentBufferSize:"+currentBufferSize+",等待消费者消费");
-                                        frames.wait();
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                                frames.add(frame);
-                                currentBufferSize++;
-                                frames.notify();
-                            }
-
-                            if (!c_frames.isEmpty()) {
-                                frame = c_frames.remove(0);
-                                frame.isDrawed = false;
-                            } else {
-                                frame = new Frame();
-                                frame.isDrawed = false;
-                                frame.bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                            }
-                            isfinished = videoCodec2.fillBitmap(frame.bitmap);
-                        }
-
-                        long endTime = System.currentTimeMillis();
-                        System.out.println(String.format("填充为bitmap耗时:%.2fs",(endTime-startTime)/1000.0));
-
-                        videoCodec2.close();
-                    }
-                }).start();
-
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        while (true) {
-                            if(isfinished)break;
-                            synchronized (frames) {
-                                while (currentBufferSize < 1 && !isfinished) {
-                                    try {
-                                        Log.e("Main","currentBufferSize:"+currentBufferSize+",等待生产者生产");
-                                        frames.wait();
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                                for (Frame frame : frames) {
-                                    if (!frame.isDrawed) {
-                                        Canvas canvas = holder.lockCanvas();
-                                        if(canvas!=null) {
-                                            long start = System.currentTimeMillis();
-                                            Paint paint = new Paint();
-                                            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-                                            canvas.drawPaint(paint);
-                                            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
-                                            canvas.drawBitmap(frame.bitmap, 0, 0, null);
-                                            frame.isDrawed = true;
-                                            holder.unlockCanvasAndPost(canvas);
-                                            frames.remove(frame);
-//                                            frame.bitmap.recycle();
-                                            c_frames.add(frame);
-                                            currentBufferSize--;
-                                            frames.notify();
-                                            break;
-                                        }
-                                    }
-                                }
-
-                            }
-                        }
-                    }
-                }).start();
-            }
-
-            @Override
-            public void surfaceDestroyed(SurfaceHolder holder) {
-
-            }
-        });
+//
+//        sv1.getHolder().addCallback(new SurfaceHolder.Callback() {
+//            private volatile boolean isfinished;
+//            @Override
+//            public void surfaceCreated(SurfaceHolder holder) {
+//
+//            }
+//
+//            @Override
+//            public void surfaceChanged(final SurfaceHolder holder, final int format, final int width, final int height) {
+//               /* new Thread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        videoCodec2=new VideoCodec("/sdcard/Wildlife.wmv");
+//                        videoCodec2.open();
+//                        int retV = videoCodec2.init();
+//                        System.out.println("videoCodec ret:"+retV);
+//                        Bitmap bitmap = Bitmap.createBitmap(1280, 720, Bitmap.Config.ARGB_8888);
+//                        boolean b = !videoCodec2.fillBitmap(bitmap);
+//
+//                        while (b){
+//                            Canvas canvas = holder.lockCanvas();
+//                            long start=System.currentTimeMillis();
+////                            canvas.drawColor(Color.BLACK);
+//                            Paint paint = new Paint();
+//                            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+//                            canvas.drawPaint(paint);
+//                            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
+//                            canvas.drawBitmap(bitmap,0,0,null);
+//                            long end=System.currentTimeMillis();
+//                            Log.e("VideCodec","draw coast:"+(end-start));
+//                            holder.unlockCanvasAndPost(canvas);
+////                            bitmap = Bitmap.createBitmap(1280, 720, Bitmap.Config.ARGB_8888);
+//                            b = !videoCodec2.fillBitmap(bitmap);
+//                            long end1=System.currentTimeMillis();
+//                            Log.e("VideCodec","get bitmap cost:"+(end1-end));
+//                        }
+//
+//                        videoCodec2.close();
+//                    }
+//                }).start();*/
+//
+//               Log.i("Main:","width:"+width+" height:"+height);
+//
+//                new Thread(new Runnable() {
+//
+//
+//
+//                    @Override
+//                    public void run() {
+//                        videoCodec2=new VideoCodec("/sdcard/Wildlife.wmv");
+//                        videoCodec2.open();
+//                        int retV = videoCodec2.init();
+//                        System.out.println("videoCodec ret:"+retV);
+//                        long startTime = System.currentTimeMillis();
+//                        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+//                        isfinished = videoCodec2.fillBitmap(bitmap);
+//
+//                        Frame frame = new Frame();
+//                        frame.bitmap = bitmap;
+//                        frame.isDrawed = false;
+//
+//                        while (!isfinished){
+//
+//                            synchronized (frames){
+//                                frame.isDrawed=false;
+//                                while (currentBufferSize >= FRAME_BUFFER_SIZE) {
+//                                    try {
+//                                        Log.e("Main","currentBufferSize:"+currentBufferSize+",等待消费者消费");
+//                                        frames.wait();
+//                                    } catch (InterruptedException e) {
+//                                        e.printStackTrace();
+//                                    }
+//                                }
+//                                frames.add(frame);
+//                                currentBufferSize++;
+//                                frames.notify();
+//                            }
+//
+//                            if (!c_frames.isEmpty()) {
+//                                frame = c_frames.remove(0);
+//                                frame.isDrawed = false;
+//                            } else {
+//                                frame = new Frame();
+//                                frame.isDrawed = false;
+//                                frame.bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+//                            }
+//                            isfinished = videoCodec2.fillBitmap(frame.bitmap);
+//                        }
+//
+//                        long endTime = System.currentTimeMillis();
+//                        System.out.println(String.format("填充为bitmap耗时:%.2fs",(endTime-startTime)/1000.0));
+//
+//                        videoCodec2.close();
+//                    }
+//                }).start();
+//
+//                new Thread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        while (true) {
+//                            if(isfinished)break;
+//                            synchronized (frames) {
+//                                while (currentBufferSize < 1 && !isfinished) {
+//                                    try {
+//                                        Log.e("Main","currentBufferSize:"+currentBufferSize+",等待生产者生产");
+//                                        frames.wait();
+//                                    } catch (InterruptedException e) {
+//                                        e.printStackTrace();
+//                                    }
+//                                }
+//                                for (Frame frame : frames) {
+//                                    if (!frame.isDrawed) {
+//                                        Canvas canvas = holder.lockCanvas();
+//                                        if(canvas!=null) {
+//                                            long start = System.currentTimeMillis();
+//                                            Paint paint = new Paint();
+//                                            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+//                                            canvas.drawPaint(paint);
+//                                            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
+//                                            canvas.drawBitmap(frame.bitmap, 0, 0, null);
+//                                            frame.isDrawed = true;
+//                                            holder.unlockCanvasAndPost(canvas);
+//                                            frames.remove(frame);
+////                                            frame.bitmap.recycle();
+//                                            c_frames.add(frame);
+//                                            currentBufferSize--;
+//                                            frames.notify();
+//                                            break;
+//                                        }
+//                                    }
+//                                }
+//
+//                            }
+//                        }
+//                    }
+//                }).start();
+//            }
+//
+//            @Override
+//            public void surfaceDestroyed(SurfaceHolder holder) {
+//
+//            }
+//        });
 
 
 

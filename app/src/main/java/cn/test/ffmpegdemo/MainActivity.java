@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import gl.GlDemoActivity;
+import gl.test.BitmapActivity;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -20,6 +21,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button btnGl;
 
     private Button btn_gl_demo;
+
+    private Button mygl_demo;
 
     // Used to load the 'native-lib' library on application startup.
     static {
@@ -43,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_getfirstframe=findViewById(R.id.btn_getfirstframe);
         btnGl=findViewById(R.id.btn_gl);
         btn_media_codec=findViewById(R.id.btn_media_codec);
-
+        mygl_demo=findViewById(R.id.mygl_demo);
         btn_gl_demo=findViewById(R.id.btn_gl_demo);
 
         btn_surface=findViewById(R.id.btn_surface);
@@ -59,6 +62,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnGl.setOnClickListener(this);
         btn_media_codec.setOnClickListener(this);
         btn_gl_demo.setOnClickListener(this);
+        mygl_demo.setOnClickListener(this);
     }
 
     /**
@@ -110,6 +114,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btn_gl_demo:
                 startActivity(new Intent(this, GlDemoActivity.class));
+                break;
+            case R.id.mygl_demo:
+                startActivity(new Intent(this, BitmapActivity.class));
                 break;
             default:
                 break;

@@ -33,6 +33,8 @@ public class VideoCodec {
 
     private native byte[] getNextFrame(long ptr);
 
+    private native VAFrame nextFrame(long ptr);
+
     private native static void avInitialize();
 
     private native  boolean display(long ptr,Surface surface);
@@ -73,6 +75,10 @@ public class VideoCodec {
     public byte[] getNextFrame() {
         Log.e("VideoCodec","Java getNextFrame invoked");
         return getNextFrame(this.ptr);
+    }
+
+    public VAFrame nextFrame(){
+        return nextFrame(this.ptr);
     }
 
     public boolean fillBitmap(Bitmap bitmap){
