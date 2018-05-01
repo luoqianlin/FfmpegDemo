@@ -108,12 +108,15 @@ public class MyRenderer3 implements GLSurfaceView.Renderer {
             }
         }, 0);*/
     }
-
+/**
+ * GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT
+ * */
     @Override
     public void onDrawFrame(GL10 gl) {
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+        GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
         VAFrame vaFrame = videoCodec.nextFrame();
         if (vaFrame != null) {
+            System.out.println("---");
 //                        System.out.println("解码出的视屏 width:" + vaFrame.getWidth() + ",height:" + vaFrame.getHeight());
 //                        for(int i=0;i<3;i++){
 //                            System.out.println("linesize["+i+"]="+vaFrame.getLinesize()[i]);
@@ -127,6 +130,8 @@ public class MyRenderer3 implements GLSurfaceView.Renderer {
 
 
 
+        }else{
+            System.out.println("is null end");
         }
         if (myYUV != null) {
 //            synchronized (myYUV) {
@@ -134,7 +139,7 @@ public class MyRenderer3 implements GLSurfaceView.Renderer {
 //            }
         }
 
-        myBitmap.draw();
+//        myBitmap.draw();
 
 
     }

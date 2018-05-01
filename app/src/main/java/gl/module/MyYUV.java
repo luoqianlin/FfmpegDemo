@@ -47,6 +47,7 @@ public class MyYUV {
                 .asFloatBuffer()
                 .put(textureVertexData);
         mTexVertexBuffer.flip();
+
     }
 
     public VAFrame getVaFrame() {
@@ -66,8 +67,9 @@ public class MyYUV {
      *  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
      **/
     public void draw(){
-        if (this.vaFrame == null) return;
         glyuvContext.useProgram();
+        if (this.vaFrame == null) return;
+
         GLES20.glEnableVertexAttribArray(glyuvContext.getPositionHandle());
         GLES20.glVertexAttribPointer(glyuvContext.getPositionHandle(), 3, GLES20.GL_FLOAT, false,
                 12, mVertexBuffer);
@@ -79,37 +81,35 @@ public class MyYUV {
         int[] yuvTexId = glyuvContext.getYuvTexId();
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, yuvTexId[0]);
-        if(isdraw) {
-            GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, vaFrame.getLinesize()[0],
-                    vaFrame.getHeight(), 0, GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, vaFrame.getData()[0]);
-        }else{
+//        if(isdraw) {
+//            GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, vaFrame.getLinesize()[0],
+//                    vaFrame.getHeight(), 0, GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, vaFrame.getData()[0]);
+//        }else{
             GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, vaFrame.getLinesize()[0],
                     vaFrame.getHeight(), 0, GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, vaFrame.getData()[0]);
-        }
+//        }
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, yuvTexId[1]);
-        if(isdraw) {
-            GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, vaFrame.getLinesize()[1],
-                    vaFrame.getHeight() / 2, 0, GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, vaFrame.getData()[1]);
-        }else{
+//        if(isdraw) {
+//            GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, vaFrame.getLinesize()[1],
+//                    vaFrame.getHeight() / 2, 0, GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, vaFrame.getData()[1]);
+//        }else{
             GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, vaFrame.getLinesize()[1],
                     vaFrame.getHeight() / 2, 0, GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, vaFrame.getData()[1]);
-        }
+//        }
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE2);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, yuvTexId[2]);
-        if(isdraw) {
-            GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, vaFrame.getLinesize()[2],
-                    vaFrame.getHeight() / 2, 0, GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, vaFrame.getData()[2]);
-            isdraw=true;
-        }else{
+//        if(isdraw) {
+//            GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, vaFrame.getLinesize()[2],
+//                    vaFrame.getHeight() / 2, 0, GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, vaFrame.getData()[2]);
+//            isdraw=true;
+//        }else{
             GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, vaFrame.getLinesize()[2],
                     vaFrame.getHeight() / 2, 0, GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, vaFrame.getData()[2]);
-        }
+//        }
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP,0,4);
-
-
 
         GLES20.glDisableVertexAttribArray(glyuvContext.getTexCoordHandle());
         GLES20.glDisableVertexAttribArray(glyuvContext.getPositionHandle());

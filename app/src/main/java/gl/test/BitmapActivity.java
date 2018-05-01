@@ -14,7 +14,7 @@ public class BitmapActivity extends AppCompatActivity {
         setContentView(R.layout.activity_bitmap);
         sv=findViewById(R.id.sv);
         sv.setEGLContextClientVersion(2);
-        sv.setEGLConfigChooser(new MyConfigChooser());  //一定要在setRender之前调用
+//        sv.setEGLConfigChooser(new MyConfigChooser());  //一定要在setRender之前调用
         sv.setRenderer(new MyRenderer3(sv));
         sv.setDebugFlags(GLSurfaceView.DEBUG_CHECK_GL_ERROR);
 //        sv.setRenderMode(RENDERMODE_WHEN_DIRTY);
