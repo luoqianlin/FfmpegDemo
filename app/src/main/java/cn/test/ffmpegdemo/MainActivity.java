@@ -7,7 +7,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import gl.GlDemoActivity;
+import gl.GlDemoBitmapActivity;
 import gl.test.BitmapActivity;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -113,7 +113,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(new Intent(this,MediaCodecActivity.class));
                 break;
             case R.id.btn_gl_demo:
-                startActivity(new Intent(this, GlDemoActivity.class));
+                startActivity(new Intent(this, GlDemoBitmapActivity.class));
+//                startActivity(new Intent(this, GlDemoActivity.class));
                 break;
             case R.id.mygl_demo:
                 startActivity(new Intent(this, BitmapActivity.class));

@@ -15,9 +15,10 @@ public class BitmapActivity extends AppCompatActivity {
         sv=findViewById(R.id.sv);
         sv.setEGLContextClientVersion(2);
 //        sv.setEGLConfigChooser(new MyConfigChooser());  //一定要在setRender之前调用
-        sv.setRenderer(new MyRenderer3(sv));
+        MyRenderer3 renderer = new MyRenderer3(sv);
+        sv.setRenderer(renderer);
         sv.setDebugFlags(GLSurfaceView.DEBUG_CHECK_GL_ERROR);
-//        sv.setRenderMode(RENDERMODE_WHEN_DIRTY);
+        sv.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
 
     @Override
@@ -35,6 +36,7 @@ public class BitmapActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
     }
 
 

@@ -146,6 +146,7 @@ int VideoCodec::release() {
     if (this->ic) {
         avformat_close_input(&this->ic);
     }
+    LOGI("video release....");
     return 0;
 }
 
@@ -923,8 +924,7 @@ Java_cn_test_ffmpegdemo_VideoSurfaceView_videoPlay(JNIEnv *env, jobject instance
 
     glUseProgram(programId);
     glEnableVertexAttribArray(aPositionHandle);
-    glVertexAttribPointer(aPositionHandle, 3, GL_FLOAT, GL_FALSE,
-                          12, vertexData);
+    glVertexAttribPointer(aPositionHandle, 3, GL_FLOAT, GL_FALSE,12, vertexData);
     glEnableVertexAttribArray(aTextureCoordHandle);
     glVertexAttribPointer(aTextureCoordHandle,2,GL_FLOAT,GL_FALSE,8,textureVertexData);
     /***
@@ -1043,14 +1043,17 @@ Java_cn_test_ffmpegdemo_VideoSurfaceView_videoPlay(JNIEnv *env, jobject instance
 int VideoCodec::decode_next_frame(AVFrame *yuvFrame) {
 
     int y_size =this->avctx->width * this->avctx->height;
-    AVPacket *pkt = (AVPacket *) malloc(sizeof(AVPacket));
-    av_new_packet(pkt, y_size);
+//    AVPacket *pkt = (AVPacket *) malloc(sizeof(AVPacket));
+//    av_new_packet(pkt, y_size);
+    AVPacket *pkt = av_packet_alloc();
     /***
      * 开始解码
      * **/
     int ret;
     while (1) {
         if (av_read_frame(this->ic, pkt) < 0) {
+            av_packet_free(&pkt);
+//            free(pkt);
             return AVERROR_EOF;
         }
         if (pkt->stream_index == this->stream_index) {
@@ -1070,6 +1073,8 @@ int VideoCodec::decode_next_frame(AVFrame *yuvFrame) {
         }
         av_packet_unref(pkt);
     }
+//    free(pkt);
+    av_packet_free(&pkt);
     return 0;
 }
 
@@ -1100,6 +1105,10 @@ Java_com_sansi_va_VideoCodec_nextFrame__J(JNIEnv *env, jobject instance, jlong p
     env->CallVoidMethod(avFrame,setLinesize_id,linesize_arr);
     jobjectArray byteBufferArray = env->NewObjectArray(AV_NUM_DATA_POINTERS, env->FindClass("java/nio/Buffer"), NULL);
     for(int i=0;i<AV_NUM_DATA_POINTERS;i++){
+        if (yuvFrame->data[i] == NULL) {
+//            LOGI("i=%d is NULL", i);
+            break;
+        }
         jobject byteBuffer = env->NewDirectByteBuffer(yuvFrame->data[i], yuvFrame->linesize[i]);
         env->SetObjectArrayElement(byteBufferArray,i,byteBuffer);
     }

@@ -37,18 +37,86 @@ public class MyBitmap {
 
     int x;
     int y;
-
+    int winWidth;
+    int winHeight;
     private final FloatBuffer mVertexBuffer;
     private final FloatBuffer mTexVertexBuffer;
     private final ShortBuffer mVertexIndexBuffer;
-    private Bitmap bitmap;
+    private final Bitmap bitmap;
+    private  int deltaX=10;
+
+    public void move(){
+        setX(this.x+this.deltaX);
+    }
+
+    public void check(){
+        if (deltaX > 0) {
+            if (this.x+this.bitmap.getWidth() >= this.winWidth) {
+                this.deltaX = -1 * this.deltaX;
+            }
+        } else if(this.deltaX<0){
+            if (this.x <= 0) {
+                this.deltaX = -1 * this.deltaX;
+            }
+        }
+        move();
+    }
+
+    public synchronized void setX(int x){
+        this.x=x;
+        int width=bitmap.getWidth();
+        int height=bitmap.getHeight();
+        PointF pointF=new PointF();
+        for (int i = 0; i < VERTEX.length; i += 3) {
+            if(i==0) {
+                toGLCoordinate(x + width, y, winWidth, winHeight, pointF);
+                VERTEX[i] = pointF.x;
+                VERTEX[i + 1] = pointF.y;
+            }else if(i==3){
+                toGLCoordinate(x, y, winWidth, winHeight, pointF);
+                VERTEX[i] = pointF.x;
+                VERTEX[i + 1] = pointF.y;
+            }else if(i==6){
+                toGLCoordinate(x, y+height, winWidth, winHeight, pointF);
+                VERTEX[i] = pointF.x;
+                VERTEX[i + 1] = pointF.y;
+            }else if(i==9){
+                toGLCoordinate(x+width, y+height, winWidth, winHeight, pointF);
+                VERTEX[i] = pointF.x;
+                VERTEX[i + 1] = pointF.y;
+            }
+        }
+
+//        System.out.println("****>"+Arrays.toString(VERTEX));
+        mVertexBuffer.clear();
+        mVertexBuffer.put(VERTEX);
+        mVertexBuffer.flip();
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getDeltaX() {
+        return deltaX;
+    }
+
+    public int getWinWidth() {
+        return winWidth;
+    }
+
+    public int getWinHeight() {
+        return winHeight;
+    }
 
     public MyBitmap(int x, int y,
-                    int winWidth,int winHeight,
+                    int winWidth, int winHeight,
                     Bitmap bitmap, MyGLContext2 myGLContext2) {
         System.out.println("构造函数");
         this.bitmap=bitmap;
         this.myGLContext2=myGLContext2;
+        this.winHeight=winHeight;
+        this.winWidth=winWidth;
         this.x = x;
         this.y = y;
         int width=bitmap.getWidth();
@@ -124,7 +192,7 @@ public class MyBitmap {
 //        bitmap.recycle();
     }
 
-    public void draw(){
+    public synchronized void draw(){
         myGLContext2.useProgram();
 
 
