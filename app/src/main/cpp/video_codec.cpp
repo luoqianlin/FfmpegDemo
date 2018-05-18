@@ -134,6 +134,7 @@ int VideoCodec::init(const string input_file,const int video_width,const int vid
     this->stream_index = stream_index;
     this->video_height=video_height;
     this->video_width=video_width;
+    LOGI("pix_fmt:%d",avctx->pix_fmt);
     return 0;
 }
 
@@ -286,7 +287,7 @@ int VideoCodec::decode_next_frame_tobitmap(JNIEnv * env,jobject bitmap) {
                                                 info.width,
                                                 info.height,
                                                 AV_PIX_FMT_RGBA,
-                                                SWS_BICUBIC,
+                                                SWS_FAST_BILINEAR,
                                                 NULL,
                                                 NULL,
                                                 NULL);
@@ -384,7 +385,7 @@ int VideoCodec::decode_next_frame(JNIEnv *env,jobject surface) {
                                                 avctx->width,
                                                 avctx->height,
                                                 AV_PIX_FMT_RGBA,
-                                                SWS_BICUBIC,
+                                                SWS_FAST_BILINEAR,
                                                 NULL,
                                                 NULL,
                                                 NULL);
@@ -552,7 +553,7 @@ int VideoCodec::decode_play(JNIEnv *env,jobject surface) {
                                                 window_width,
                                                 window_height,
                                                 AV_PIX_FMT_RGBA,
-                                                SWS_BICUBIC,
+                                                SWS_FAST_BILINEAR,
                                                 NULL,
                                                 NULL,
                                                 NULL);
@@ -586,15 +587,15 @@ int VideoCodec::decode_play(JNIEnv *env,jobject surface) {
                               uint8_t *const dst[], const int dstStride[]);
                  * */
 //                clock_t  tt1=clock();
-                long start=current_time_usec();
+//                long start=current_time_usec();
                 // 格式转换
                 sws_scale(sws_ctx, (uint8_t const *const *) pFrame->data,
                           pFrame->linesize, 0, avctx->height,
                           pFrameRGBA->data, pFrameRGBA->linesize);
 //                clock_t  tt2=clock();
-                long end=current_time_usec();
+//                long end=current_time_usec();
 
-                LOGI("scale:%.2f",INTERVAL_MS(start,end));
+//                LOGI("scale:%.2f",INTERVAL_MS(start,end));
                 // 获取stride
                 uint8_t *dst = (uint8_t *) windowBuffer.bits;
                 int dstStride = windowBuffer.stride * 4;
@@ -602,7 +603,7 @@ int VideoCodec::decode_play(JNIEnv *env,jobject surface) {
                 int srcStride = pFrameRGBA->linesize[0];
 //                LOGI("width:%d,height:%d,linesize:%d",avctx->width,avctx->height,pFrameRGBA->linesize[0]);
 //                clock_t  c_s=clock();
-                long start_1=current_time_usec();
+//                long start_1=current_time_usec();
                 // 由于window的stride和帧的stride不同,因此需要逐行复制
                 int h;
                 for (h = 0; h < window_height; h++) {
@@ -610,9 +611,9 @@ int VideoCodec::decode_play(JNIEnv *env,jobject surface) {
                 }
 //                memcpy(dst,src,pFrameRGBA->height*pFrameRGBA->linesize[0]);
 //                clock_t t2=clock();
-                long end_1=current_time_usec();
-                LOGI("copy cost:%.2f,ANativeWindow cost TotalTime:%.2f",INTERVAL_MS(start_1,end_1),
-                     INTERVAL_MS(start,end_1));
+//                long end_1=current_time_usec();
+//                LOGI("copy cost:%.2f,ANativeWindow cost TotalTime:%.2f",INTERVAL_MS(start_1,end_1),
+//                     INTERVAL_MS(start,end_1));
                 ANativeWindow_unlockAndPost(nativeWindow);
             }
 
@@ -805,6 +806,9 @@ const char *fragmentShaderString = GET_STR(
         }
 );
 
+void
+bindYUVTexture(GLuint yTextureId, GLuint uTextureId, GLuint vTextureId, const AVFrame *yuvFrame);
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_cn_test_ffmpegdemo_VideoSurfaceView_videoPlay(JNIEnv *env, jobject instance, jstring path_,
@@ -840,6 +844,7 @@ Java_cn_test_ffmpegdemo_VideoSurfaceView_videoPlay(JNIEnv *env, jobject instance
     if (avcodec_open2(codec_ctx, avCodec, NULL) < 0) {
         return;
     }
+    LOGI("pix_fmt:%d",codec_ctx->pix_fmt);
     int y_size = codec_ctx->width * codec_ctx->height;
     AVPacket *pkt = (AVPacket *) malloc(sizeof(AVPacket));
     av_new_packet(pkt, y_size);
@@ -958,7 +963,23 @@ Java_cn_test_ffmpegdemo_VideoSurfaceView_videoPlay(JNIEnv *env, jobject instance
 
     glUniform1i(textureSamplerHandleV,2);
 
-
+    struct SwsContext *sws_ctx = sws_getContext(codec_ctx->width,
+                                                codec_ctx->height,
+                                                codec_ctx->pix_fmt,
+                                                codec_ctx->width,
+                                                codec_ctx->height,
+                                                AV_PIX_FMT_YUV420P,
+                                                SWS_FAST_BILINEAR,
+                                                NULL,
+                                                NULL,
+                                                NULL);
+    AVFrame *pFrameyuv = av_frame_alloc();
+    int numBytes = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, codec_ctx->width, codec_ctx->height, 1);
+    uint8_t *buffer = (uint8_t *) av_malloc(numBytes * sizeof(uint8_t));
+    av_image_fill_arrays(pFrameyuv->data, pFrameyuv->linesize, buffer, AV_PIX_FMT_YUV420P,
+                         codec_ctx->width, codec_ctx->height, 1);
+    pFrameyuv->width=codec_ctx->width;
+    pFrameyuv->height=codec_ctx->height;
     /***
      * 开始解码
      * **/
@@ -981,21 +1002,19 @@ Java_cn_test_ffmpegdemo_VideoSurfaceView_videoPlay(JNIEnv *env, jobject instance
                 av_packet_unref(pkt);
                 continue;
             }
+            if(codec_ctx->pix_fmt!=AV_PIX_FMT_YUV420P) {
+                sws_scale(sws_ctx, (uint8_t const *const *) yuvFrame->data,
+                          yuvFrame->linesize, 0, codec_ctx->height,
+                          pFrameyuv->data, pFrameyuv->linesize);
+                bindYUVTexture(yTextureId, uTextureId, vTextureId, pFrameyuv);
+            }else{
+                bindYUVTexture(yTextureId, uTextureId, vTextureId, yuvFrame);
+            }
             /***
               * 解码后的数据更新到yuv纹理中
             * **/
 
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, yTextureId);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, yuvFrame->linesize[0], yuvFrame->height,0, GL_LUMINANCE, GL_UNSIGNED_BYTE, yuvFrame->data[0]);
 
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, uTextureId);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE,  yuvFrame->linesize[1], yuvFrame->height/2,0, GL_LUMINANCE, GL_UNSIGNED_BYTE, yuvFrame->data[1]);
-
-            glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, vTextureId);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE,  yuvFrame->linesize[2], yuvFrame->height/2,0, GL_LUMINANCE, GL_UNSIGNED_BYTE, yuvFrame->data[2]);
 
             /*
              *
@@ -1040,12 +1059,28 @@ Java_cn_test_ffmpegdemo_VideoSurfaceView_videoPlay(JNIEnv *env, jobject instance
     env->ReleaseStringUTFChars(path_, path);
 }
 
+void
+bindYUVTexture(GLuint yTextureId, GLuint uTextureId, GLuint vTextureId, const AVFrame *yuvFrame) {
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, yTextureId);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, yuvFrame->linesize[0], yuvFrame->height,0, GL_LUMINANCE, GL_UNSIGNED_BYTE, yuvFrame->data[0]);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, uTextureId);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE,  yuvFrame->linesize[1], yuvFrame->height/2,0, GL_LUMINANCE, GL_UNSIGNED_BYTE, yuvFrame->data[1]);
+
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, vTextureId);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE,  yuvFrame->linesize[2], yuvFrame->height/2,0, GL_LUMINANCE, GL_UNSIGNED_BYTE, yuvFrame->data[2]);
+}
+
 int VideoCodec::decode_next_frame(AVFrame *yuvFrame) {
 
     int y_size =this->avctx->width * this->avctx->height;
 //    AVPacket *pkt = (AVPacket *) malloc(sizeof(AVPacket));
 //    av_new_packet(pkt, y_size);
     AVPacket *pkt = av_packet_alloc();
+    long decode_start = current_time_usec();
     /***
      * 开始解码
      * **/
@@ -1075,6 +1110,8 @@ int VideoCodec::decode_next_frame(AVFrame *yuvFrame) {
     }
 //    free(pkt);
     av_packet_free(&pkt);
+    long decode_end = current_time_usec();
+    LOGI("Native Decode Cost:%.2f",(decode_end-decode_start)/1000.0f);
     return 0;
 }
 
@@ -1084,7 +1121,7 @@ Java_com_sansi_va_VideoCodec_nextFrame__J(JNIEnv *env, jobject instance, jlong p
     AVFrame *yuvFrame = av_frame_alloc();
     int ret = (reinterpret_cast<VideoCodec *>(ptr))->decode_next_frame(yuvFrame);
     if (ret == AVERROR_EOF) {
-        LOGI("frame 结束");
+//        LOGI("frame 结束");
         return NULL;
     }
     jclass clazz_vaFrame = env->FindClass("com/sansi/va/VAFrame");

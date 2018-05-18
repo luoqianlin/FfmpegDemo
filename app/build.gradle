@@ -4,7 +4,7 @@ android {
     compileSdkVersion 26
     defaultConfig {
         applicationId "cn.test.ffmpegdemo"
-        minSdkVersion 17
+        minSdkVersion 18
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
@@ -14,7 +14,7 @@ android {
                 cppFlags "-std=c++11 -ljnigraphics"
             }
             ndk {
-                abiFilters "armeabi"
+                abiFilters "armeabi-v7a"
                 //, "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
             }
         }
@@ -43,4 +43,5 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
     implementation 'com.google.guava:guava:16.0.1'
+    implementation project(':FFmpegAndroid')
 }

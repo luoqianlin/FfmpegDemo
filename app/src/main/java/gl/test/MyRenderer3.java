@@ -73,7 +73,7 @@ public class MyRenderer3 implements GLSurfaceView.Renderer {
         myBitmap=new MyBitmap(width/2-bitmap.getWidth()/2,height/2-bitmap.getHeight()/2,width,height,bitmap,glContext2);
         myGLYUVContext = new MyGLYUVContext();
         myYUV = new MyYUV(myGLYUVContext);
-        videoCodec = new VideoCodec("/sdcard/Wildlife.wmv");
+        videoCodec = new VideoCodec("/storage/sdcard0/VisualArts/materials/24b9f53883ba97e4ee236e3396607066.wmv");
         videoCodec.open();
         int retV = videoCodec.init(width, height);
         System.out.println("videoCodec ret:" + retV);
@@ -146,15 +146,19 @@ public class MyRenderer3 implements GLSurfaceView.Renderer {
 //            }
 //        };
         startTime=System.currentTimeMillis();
-      handler.postDelayed(decodeHandler, 10);
+//      handler.postDelayed(decodeHandler, 10);
     }
 /**
  * GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT
  * */
+boolean first = false;
     @Override
     public void onDrawFrame(GL10 gl) {
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
-      /*  VAFrame vaFrame = videoCodec.nextFrame();
+        long decodestart=System.currentTimeMillis();
+        VAFrame vaFrame = videoCodec.nextFrame();
+        long decodeend=System.currentTimeMillis();
+        System.out.printf("decode cost:%d\n",(decodeend-decodestart));
         if (vaFrame != null) {
 //            System.out.println("---");
 //                        System.out.println("解码出的视屏 width:" + vaFrame.getWidth() + ",height:" + vaFrame.getHeight());
@@ -164,22 +168,29 @@ public class MyRenderer3 implements GLSurfaceView.Renderer {
 
 //                    System.out.println("ptr:" + Long.toHexString(vaFrame.getPtr()));
 
-
+            long renderstart=System.currentTimeMillis();
             myYUV.setVaFrame(vaFrame);
 //            handler.postDelayed(this, 100L);
+            myBitmap.check();
 
+            if (myYUV != null) {
+//            synchronized (myYUV) {
+                myYUV.draw();
+//            }
+            }
 
+            myBitmap.draw();
+            long renderend=System.currentTimeMillis();
+            System.out.printf("render cost:%d\n",(renderend-renderstart));
 
         }else{
 //            System.out.println("is null end");
-        }*/
-        if (myYUV != null) {
-//            synchronized (myYUV) {
-            myYUV.draw();
-//            }
+            if(!first) {
+                System.out.println("cost:" + (System.currentTimeMillis() - startTime) / 1000.0 + "s");
+                first = true;
+            }
         }
 
-        myBitmap.draw();
 
 
     }

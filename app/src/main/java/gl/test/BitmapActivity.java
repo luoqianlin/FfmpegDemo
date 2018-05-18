@@ -18,7 +18,7 @@ public class BitmapActivity extends AppCompatActivity {
         MyRenderer3 renderer = new MyRenderer3(sv);
         sv.setRenderer(renderer);
         sv.setDebugFlags(GLSurfaceView.DEBUG_CHECK_GL_ERROR);
-        sv.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+//        sv.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
 
     @Override
