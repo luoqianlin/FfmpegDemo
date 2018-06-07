@@ -261,7 +261,7 @@ endif(${ANDROID_ABI} STREQUAL "x86_64")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
 
 include_directories(
-   ${CMAKE_SOURCE_DIR}/src/main/jniLibs/include
+   ${CMAKE_SOURCE_DIR}/src/main/jniLibs/src
 )
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
