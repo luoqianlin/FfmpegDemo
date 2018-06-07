@@ -9,6 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.ShortBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -64,11 +65,22 @@ public class GlDemoActivity extends AppCompatActivity {
                 + "void main() {\n"
                 + " gl_FragColor = vec4(0.5, 0, 0, 1);\n"
                 + "}";
-        private static final float[] VERTEX = {   // in counterclockwise order:
+      /*  private static final float[] VERTEX = {   // in counterclockwise order:
                 0, 1, 0,  // top
                 -0.5f, -1, 0,  // bottom left
                 1, -1, 0,  // bottom right
         };
+*/
+
+        private static final float[] VERTEX = {   // in counterclockwise order:
+                1, 1, 0,   // top right
+                -1, 1, 0,  // top left
+                -1, -1, 0, // bottom left
+                1, -1, 0,  // bottom right
+        };
+        private static final short[] VERTEX_INDEX = { 0, 1, 2, 0, 2, 3 };
+
+        private final ShortBuffer mVertexIndexBuffer;
 
         private final FloatBuffer mVertexBuffer;
 
@@ -78,11 +90,23 @@ public class GlDemoActivity extends AppCompatActivity {
         private float[] mMVPMatrix=new float[16];
 
         MyRenderer() {
+           /* mVertexBuffer = ByteBuffer.allocateDirect(VERTEX.length * 4)
+                    .order(ByteOrder.nativeOrder())
+                    .asFloatBuffer()
+                    .put(VERTEX);
+            mVertexBuffer.position(0);*/
+
             mVertexBuffer = ByteBuffer.allocateDirect(VERTEX.length * 4)
                     .order(ByteOrder.nativeOrder())
                     .asFloatBuffer()
                     .put(VERTEX);
             mVertexBuffer.position(0);
+
+            mVertexIndexBuffer = ByteBuffer.allocateDirect(VERTEX_INDEX.length * 2)
+                    .order(ByteOrder.nativeOrder())
+                    .asShortBuffer()
+                    .put(VERTEX_INDEX);
+            mVertexIndexBuffer.position(0);
         }
 
         static int loadShader(int type, String shaderCode) {
@@ -109,6 +133,7 @@ public class GlDemoActivity extends AppCompatActivity {
             mMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uMVPMatrix");
             GLES20.glEnableVertexAttribArray(mPositionHandle);
             GLES20.glVertexAttribPointer(mPositionHandle, 3, GLES20.GL_FLOAT, false,12, mVertexBuffer);
+
         }
 
         @Override
@@ -116,7 +141,7 @@ public class GlDemoActivity extends AppCompatActivity {
             GLES20.glViewport(0, 0, width, height);
 
             Matrix.perspectiveM(mMVPMatrix, 0, 45, (float) width / height, 0.1f, 100f);
-            Matrix.translateM(mMVPMatrix, 0, 0f, 0f, -2.5f);
+            Matrix.translateM(mMVPMatrix, 0, 0f, 0f, -5f);
         }
 
         @Override
@@ -124,7 +149,10 @@ public class GlDemoActivity extends AppCompatActivity {
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 //            System.out.println("---gl demo onDrawFrame---");
             GLES20.glUniformMatrix4fv(mMatrixHandle, 1, false, mMVPMatrix, 0);
-            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 3);
+//            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 3);
+            // 用 glDrawElements 来绘制，mVertexIndexBuffer 指定了顶点绘制顺序
+            GLES20.glDrawElements(GLES20.GL_TRIANGLES, VERTEX_INDEX.length,
+                    GLES20.GL_UNSIGNED_SHORT, mVertexIndexBuffer);
         }
     }
 }

@@ -65,23 +65,23 @@
         android:id="@+id/btn_play"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="16dp"
         android:text="播放"
-        app:layout_constraintStart_toStartOf="@+id/btn_format"
-        app:layout_constraintTop_toBottomOf="@+id/btn_format" />
+        app:layout_constraintEnd_toStartOf="@+id/btn_getfirstframe"
+        app:layout_constraintStart_toEndOf="@+id/btn_filter"
+        app:layout_constraintTop_toBottomOf="@+id/btn_format"/>
 
     <Button
         android:id="@+id/btn_getfirstframe"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:layout_marginStart="8dp"
         android:layout_marginTop="16dp"
         android:text="第一帧"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/btn_play"
-        app:layout_constraintTop_toBottomOf="@+id/btn_codec" />
+        app:layout_constraintTop_toBottomOf="@+id/btn_codec"/>
 
     <Button
         android:id="@+id/btn_surface"
@@ -115,23 +115,22 @@
         android:id="@+id/btn_texture"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="40dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:text="Texture"
+        app:layout_constraintEnd_toStartOf="@+id/btn_gl"
         app:layout_constraintStart_toEndOf="@+id/btn_surface"
-        app:layout_constraintTop_toBottomOf="@+id/btn_play" />
+        app:layout_constraintTop_toBottomOf="@+id/btn_play"/>
 
     <Button
         android:id="@+id/btn_gl"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="20dp"
+        android:layout_marginEnd="16dp"
         android:layout_marginTop="8dp"
         android:text="yuv->gl"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.09"
-        app:layout_constraintStart_toEndOf="@+id/btn_texture"
         app:layout_constraintTop_toBottomOf="@+id/btn_getfirstframe"/>
 
     <Button
@@ -148,9 +147,11 @@
         android:id="@+id/btn_gl_demo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="20dp"
         android:text="gl_demo"
+        app:layout_constraintEnd_toStartOf="@+id/mygl_demo"
         app:layout_constraintStart_toEndOf="@+id/btn_media_codec"
         app:layout_constraintTop_toBottomOf="@+id/btn_texture"/>
 
@@ -158,11 +159,11 @@
         android:id="@+id/mygl_demo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
+        android:layout_marginEnd="16dp"
         android:layout_marginTop="20dp"
         android:text="MyGl"
-        app:layout_constraintStart_toEndOf="@+id/btn_gl_demo"
-        app:layout_constraintTop_toBottomOf="@+id/btn_gl" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btn_gl"/>
 
 
 </android.support.constraint.ConstraintLayout>

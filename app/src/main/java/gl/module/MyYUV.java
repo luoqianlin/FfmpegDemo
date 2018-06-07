@@ -66,7 +66,7 @@ public class MyYUV {
      *
      *  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
      **/
-    public void draw(){
+    public synchronized void draw(){
         glyuvContext.useProgram();
         if (this.vaFrame == null) return;
 

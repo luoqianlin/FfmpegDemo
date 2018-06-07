@@ -55,7 +55,7 @@ public class PlayActivity extends AppCompatActivity {
                     @Override
                     public void run() {
 //                        play(holder.getSurface());
-                        videoCodec=new VideoCodec("/sdcard/2017-07-30 13-36-26屏幕截图.png");
+                        videoCodec=new VideoCodec("/storage/sdcard0/VisualArts/materials/083934c90444fbee72c109a8d54e204b.rmvb");
                         videoCodec.open();
                         int retV = videoCodec.init(width,height);
                         System.out.println("videoCodec ret:"+retV);
