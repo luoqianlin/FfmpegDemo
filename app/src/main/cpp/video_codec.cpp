@@ -4,7 +4,8 @@
 
 #include <android/bitmap.h>
 #include "video_codec.h"
-
+#include <map>
+#include <libyuv.h>
 
 
 #pragma clang diagnostic push
@@ -15,7 +16,60 @@ inline void print_av_error(int err_code) {
     av_strerror(err_code, errorMsg, 1024);
     AV_LOGE("%s", errorMsg);
 }
+static map<AVCodecID,const char*>mediacodec_decoder;
 
+void printavcodec(){
+//    char *info = (char *)malloc(400000);
+//    memset(info, 0, 400000);
+
+//    av_register_all();
+
+
+    AVCodec *c_temp = av_codec_next(NULL);
+
+    while (c_temp != NULL)
+    {
+        if (c_temp->decode != NULL)
+        {
+//            strcat(info, "[Decode]");
+        }
+        else
+        {
+//            strcat(info, "[Encode]");
+        }
+        switch (c_temp->type)
+        {
+            case AVMEDIA_TYPE_VIDEO:
+//                strcat(info, "[Video]");
+//                LOGE("[Video][%s] %10s [%s] codec_id:%d\n",(c_temp->decode != NULL ? "Decode":"Encode"),
+//                     c_temp->name,c_temp->long_name,c_temp->id);
+                if(c_temp->decode != NULL && strstr(c_temp->name,"_mediacodec")!=NULL){
+                    mediacodec_decoder.insert(pair<AVCodecID,const char*>(c_temp->id,c_temp->name));
+                }
+                break;
+
+            case AVMEDIA_TYPE_AUDIO:
+//                strcat(info, "[Audeo]");
+//                LOGE("[Audeo][%s] %10s [%s] codec_id:%d\n",(c_temp->decode != NULL ? "Decode":"Encode"),
+//                     c_temp->name,c_temp->long_name,c_temp->id);
+                break;
+            default:
+//                strcat(info, "[Other]");
+                break;
+        }
+//        sprintf(info, "%s %10s %s\n", info, c_temp->name,c_temp->long_name);
+
+        c_temp = c_temp->next;
+    }
+    LOGE("=========start mediacodec============");
+    map<AVCodecID, const char *>::iterator iter;
+    for (iter = mediacodec_decoder.begin(); iter != mediacodec_decoder.end(); iter++) {
+        LOGE("%d->%s\n", iter->first, iter->second);
+    }
+    LOGE("=========end mediacodec============");
+//    LOGE("%s",info);
+//    free(info);
+}
 /*
  * Write a frame worth of video (in pFrame) into the Android bitmap
  * described by info using the raw pixel buffer.  It's a very inefficient
@@ -115,13 +169,21 @@ int VideoCodec::init(const string input_file,const int video_width,const int vid
 
     av_codec_set_pkt_timebase(avctx, ic->streams[stream_index]->time_base);
 
-
-    codec = avcodec_find_decoder(avctx->codec_id);
+    map<AVCodecID, const char *>::iterator iter = mediacodec_decoder.find(avctx->codec_id);
+    if (iter != mediacodec_decoder.end()) {
+        LOGE("%s %s 格式,使能硬解码",input_file.c_str(),iter->second);
+        codec = avcodec_find_decoder_by_name(iter->second);
+    }
+    codec = NULL;
+    if (codec == NULL) {
+        LOGE("%s 软解",input_file.c_str());
+        codec = avcodec_find_decoder(avctx->codec_id);
+    }
     if (codec == NULL) {
         LOGD("Codec not found.");
         return -1;
     }
-
+    LOGE("codec name:%s,long name:%s",codec->name,codec->long_name);
     if ((ret = avcodec_open2(avctx, codec, NULL)) < 0) {
         LOGD("Could not open codec.");
         print_av_error(ret);
@@ -134,7 +196,10 @@ int VideoCodec::init(const string input_file,const int video_width,const int vid
     this->stream_index = stream_index;
     this->video_height=video_height;
     this->video_width=video_width;
-    LOGI("pix_fmt:%d",avctx->pix_fmt);
+    LOGI("pix_fmt:%d,%d,color_trc:%d,chroma_sample_location:%d",avctx->pix_fmt,avctx->color_primaries,
+         avctx->color_trc,avctx->chroma_sample_location);
+    const char *primaries_name = av_color_primaries_name(avctx->color_primaries);
+    LOGI("primaries_name:%s,color range:%d,color space:%d",primaries_name,avctx->color_range,avctx->colorspace);
     return 0;
 }
 
@@ -662,12 +727,43 @@ int VideoCodec::decode_play(JNIEnv *env,jobject surface) {
 
     return ret;
 }
+#define ALOG(level, TAG, ...)    ((void)__android_log_vprint(level, TAG, __VA_ARGS__))
+
+#define SYS_LOG_TAG "nmplayer"
+static void syslog_print(void *ptr, int level, const char *fmt, va_list vl)
+{
+    switch(level) {
+        case AV_LOG_DEBUG:
+            ALOG(ANDROID_LOG_VERBOSE, SYS_LOG_TAG, fmt, vl);
+            break;
+        case AV_LOG_VERBOSE:
+            ALOG(ANDROID_LOG_DEBUG, SYS_LOG_TAG, fmt, vl);
+            break;
+        case AV_LOG_INFO:
+            ALOG(ANDROID_LOG_INFO, SYS_LOG_TAG, fmt, vl);
+            break;
+        case AV_LOG_WARNING:
+            ALOG(ANDROID_LOG_WARN, SYS_LOG_TAG, fmt, vl);
+            break;
+        case AV_LOG_ERROR:
+            ALOG(ANDROID_LOG_ERROR, SYS_LOG_TAG, fmt, vl);
+            break;
+    }
+}
 
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_sansi_va_VideoCodec_avInitialize(JNIEnv *env, jclass type) {
+//    avdevice_register_all();
+
+    avfilter_register_all();
     av_register_all();
+    avformat_network_init();
+    av_log_set_level(AV_LOG_DEBUG);
+    av_log_set_callback(syslog_print);
+    av_log_set_level(AV_LOG_DEBUG);
+    printavcodec();
 }
 
 
@@ -1103,6 +1199,21 @@ int VideoCodec::decode_next_frame(AVFrame *yuvFrame) {
                 av_packet_unref(pkt);
                 continue;
             }
+
+//            if(yuvFrame->format==AV_PIX_FMT_NV21){
+//                LOGE("NV21");
+//            }else if(yuvFrame->format == AV_PIX_FMT_NV12){
+//                LOGE("NV12");
+//            }else if(yuvFrame->format == AV_PIX_FMT_YUV420P){
+//                LOGE("YUV420P");
+//            }
+//            const char *primaries_name = av_color_primaries_name(yuvFrame->color_primaries);
+//            LOGE("av_color_primaries_name:%s,color range:%d,colorspace:%d",primaries_name,yuvFrame->color_range,yuvFrame->colorspace);
+//            LOGE("width:%d,height:%d,linesize[0]:%d,linesize[1]:%d,linesize[2]:%d,data[0]:%p,data[1]:%p,data[1]:%p",
+//                 yuvFrame->width,yuvFrame->height,yuvFrame->linesize[0],yuvFrame->linesize[1],yuvFrame->linesize[2],
+//                yuvFrame->data[0],yuvFrame->data[1],yuvFrame->data[2]
+//            );
+
             av_packet_unref(pkt);
             break;
         }
@@ -1111,7 +1222,7 @@ int VideoCodec::decode_next_frame(AVFrame *yuvFrame) {
 //    free(pkt);
     av_packet_free(&pkt);
     long decode_end = current_time_usec();
-    LOGI("Native Decode Cost:%.2f",(decode_end-decode_start)/1000.0f);
+//    LOGI("Native Decode Cost:%.2f",(decode_end-decode_start)/1000.0f);
     return 0;
 }
 
@@ -1146,7 +1257,7 @@ Java_com_sansi_va_VideoCodec_nextFrame__J(JNIEnv *env, jobject instance, jlong p
 //            LOGI("i=%d is NULL", i);
             break;
         }
-        jobject byteBuffer = env->NewDirectByteBuffer(yuvFrame->data[i], yuvFrame->linesize[i]);
+        jobject byteBuffer = env->NewDirectByteBuffer(yuvFrame->data[i], abs(yuvFrame->linesize[i]));
         env->SetObjectArrayElement(byteBufferArray,i,byteBuffer);
     }
     env->CallVoidMethod(avFrame,setData_id,byteBufferArray);

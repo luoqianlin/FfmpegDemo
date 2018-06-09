@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 
@@ -16,14 +17,18 @@ import javax.microedition.khronos.opengles.GL10;
 import cn.test.ffmpegdemo.MyApplication;
 import cn.test.ffmpegdemo.R;
 import gl.context.MyGLContext2;
+import gl.context.MyGLNV12Context;
 import gl.context.MyGLYUVContext;
 import gl.module.MyBitmap;
+import gl.module.MyNV12;
 import gl.module.MyYUV;
 
 public class MyRenderer3 implements GLSurfaceView.Renderer {
 
     MyYUV myYUV;
+    MyNV12 myNV12;
     MyGLYUVContext myGLYUVContext;
+    MyGLNV12Context myGLNV12Context;
 
 
     Handler handler;
@@ -36,6 +41,9 @@ public class MyRenderer3 implements GLSurfaceView.Renderer {
     private Runnable decodeHandler;
 //    private Runnable closeHandler;
     long startTime;
+     int width;
+    int height;
+    private String  file = Environment.getExternalStorageDirectory()+"/VisualArts/materials/6b97f7d5fea76ef1db59b36d8eba7bea.mkv";
 
     public MyRenderer3(GLSurfaceView glSurfaceView) {
         this.glSurfaceView=glSurfaceView;
@@ -55,6 +63,8 @@ public class MyRenderer3 implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceChanged(GL10 gl, final int width, final int height) {
         System.out.println("height:" + height);
+        this.height=height;
+        this.width=width;
         GLES20.glViewport(0, 0, width, height);
 //        InputStream is = Tools.readFromAsserts("ic_launcher.png");
         Bitmap bitmap;
@@ -72,8 +82,10 @@ public class MyRenderer3 implements GLSurfaceView.Renderer {
 //        myBitmap=new MyBitmap(width/2-bitmap.getWidth()/2,height/2-bitmap.getHeight()/2,width,height,bitmap,glContext2);
         myBitmap=new MyBitmap(width/2-bitmap.getWidth()/2,height/2-bitmap.getHeight()/2,width,height,bitmap,glContext2);
         myGLYUVContext = new MyGLYUVContext();
+        myGLNV12Context =new MyGLNV12Context();
+        myNV12=new MyNV12(myGLNV12Context);
         myYUV = new MyYUV(myGLYUVContext);
-        videoCodec = new VideoCodec("/storage/sdcard0/VisualArts/materials/24b9f53883ba97e4ee236e3396607066.wmv");
+        videoCodec = new VideoCodec(file);
         videoCodec.open();
         int retV = videoCodec.init(width, height);
         System.out.println("videoCodec ret:" + retV);
@@ -158,7 +170,7 @@ boolean first = false;
         long decodestart=System.currentTimeMillis();
         VAFrame vaFrame = videoCodec.nextFrame();
         long decodeend=System.currentTimeMillis();
-        System.out.printf("decode cost:%d\n",(decodeend-decodestart));
+//        System.out.printf("decode cost:%d\n",(decodeend-decodestart));
         if (vaFrame != null) {
 //            System.out.println("---");
 //                        System.out.println("解码出的视屏 width:" + vaFrame.getWidth() + ",height:" + vaFrame.getHeight());
@@ -171,7 +183,7 @@ boolean first = false;
             long renderstart=System.currentTimeMillis();
             myYUV.setVaFrame(vaFrame);
 //            handler.postDelayed(this, 100L);
-            myBitmap.check();
+//            myBitmap.check();
 
             if (myYUV != null) {
 //            synchronized (myYUV) {
@@ -179,9 +191,9 @@ boolean first = false;
 //            }
             }
 
-            myBitmap.draw();
+//            myBitmap.draw();
             long renderend=System.currentTimeMillis();
-            System.out.printf("render cost:%d\n",(renderend-renderstart));
+//            System.out.printf("render cost:%d\n",(renderend-renderstart));
 
         }else{
 //            System.out.println("is null end");
@@ -189,6 +201,12 @@ boolean first = false;
                 System.out.println("cost:" + (System.currentTimeMillis() - startTime) / 1000.0 + "s");
                 first = true;
             }
+            videoCodec.close();
+
+            videoCodec = new VideoCodec(file);
+            videoCodec.open();
+            int retV = videoCodec.init(width, height);
+            System.out.println("videoCodec ret:" + retV);
         }
 
 

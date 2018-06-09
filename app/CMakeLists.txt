@@ -20,7 +20,6 @@ add_library( # Sets the name of the library.
               src/main/cpp/native-lib.cpp
               src/main/cpp/video_codec.cpp
               src/main/cpp/shaderUtils.cpp
-
              )
 add_library(
             avcodec
@@ -100,6 +99,40 @@ set_target_properties(
 endif(${ANDROID_ABI} STREQUAL "armeabi")
 
 if(${ANDROID_ABI} STREQUAL "armeabi-v7a")
+
+add_library( # Sets the name of the library.
+             yuv
+
+             # Sets the library as a shared library.
+             SHARED
+
+             # Provides a relative path to your source file(s).
+              src/main/cpp/libyuv/compare.cc
+			  src/main/cpp/libyuv/compare_common.cc
+			  src/main/cpp/libyuv/convert.cc
+			  src/main/cpp/libyuv/convert_argb.cc
+			  src/main/cpp/libyuv/convert_from.cc
+			  src/main/cpp/libyuv/convert_from_argb.cc
+			  src/main/cpp/libyuv/convert_to_argb.cc
+			  src/main/cpp/libyuv/convert_to_i420.cc
+			  src/main/cpp/libyuv/cpu_id.cc
+			  src/main/cpp/libyuv/planar_functions.cc
+			  src/main/cpp/libyuv/rotate.cc
+			  src/main/cpp/libyuv/rotate_any.cc
+			  src/main/cpp/libyuv/rotate_argb.cc
+			  src/main/cpp/libyuv/rotate_common.cc
+			  src/main/cpp/libyuv/row_any.cc
+			  src/main/cpp/libyuv/row_common.cc
+			  src/main/cpp/libyuv/scale.cc
+			  src/main/cpp/libyuv/scale_any.cc
+			  src/main/cpp/libyuv/scale_argb.cc
+			  src/main/cpp/libyuv/scale_common.cc
+			  src/main/cpp/libyuv/video_common.cc
+			  src/main/cpp/libyuv/compare_neon.cc
+			  src/main/cpp/libyuv/rotate_neon.cc
+			  src/main/cpp/libyuv/row_neon.cc
+			  src/main/cpp/libyuv/scale_neon.cc
+             )
 
 set_target_properties(
     avcodec
@@ -261,7 +294,7 @@ endif(${ANDROID_ABI} STREQUAL "x86_64")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
 
 include_directories(
-   ${CMAKE_SOURCE_DIR}/src/main/jniLibs/src
+   ${CMAKE_SOURCE_DIR}/src/main/jniLibs/include
 )
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
@@ -295,6 +328,13 @@ find_library( # Sets the name of the path variable.
                 # you want CMake to locate.
                 GLESv2)
 
+find_library( # Sets the name of the path variable.
+                GLES3-lib
+
+                # Specifies the name of the NDK library that
+                # you want CMake to locate.
+                GLESv3)
+
 
 
 # Specifies libraries CMake should link to your target library. You
@@ -303,6 +343,7 @@ find_library( # Sets the name of the path variable.
 
 target_link_libraries( # Specifies the target library.
                        native-lib
+                       yuv
                        avcodec
                        avfilter
                        avformat
@@ -315,4 +356,5 @@ target_link_libraries( # Specifies the target library.
                        ${android-lib}
                        ${EGL-lib}
                        ${GLES2-lib}
+                       ${GLES3-lib}
                        )
