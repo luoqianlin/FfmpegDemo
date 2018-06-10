@@ -1231,6 +1231,7 @@ int VideoCodec::decode_next_frame(AVFrame *yuvFrame) {
             for (int i = 0; i < 3; i++) {
                 LOGE("linesize[%d]:%d,data[%d]:%p", i, yuvFrame->linesize[i], i, yuvFrame->data[i]);
             }
+            long nv2i420_start = current_time_usec();
             uint8_t *yuv_buffer = static_cast<uint8_t *>(malloc((sizeof(uint8_t) * yuvFrame->height * yuvFrame->width * 3) >> 1));
             uint8_t *dst_y = yuv_buffer;
 
@@ -1246,6 +1247,7 @@ int VideoCodec::decode_next_frame(AVFrame *yuvFrame) {
 //
 //            int dst_stride_v = yuvFrame->height * yuvFrame->width >> 2;
 //            uint8_t *dst_v = static_cast<uint8_t *>(malloc(sizeof(uint8) * dst_stride_v));
+            
 
             int toI420 = libyuv::NV12ToI420(yuvFrame->data[0], yuvFrame->width,
                                             yuvFrame->data[1], yuvFrame->width,
@@ -1264,8 +1266,12 @@ int VideoCodec::decode_next_frame(AVFrame *yuvFrame) {
             yuvFrame->linesize[2] = yuvFrame->width >> 1;
             yuvFrame->data[2] = dst_v;
             yuvFrame->format = AV_PIX_FMT_YUV420P;
+            if(yuvFrame->extended_data==yuvFrame->data){
+                LOGE("extend_data equal");
+            }
             yuvFrame->extended_data= reinterpret_cast<uint8_t **>(yuv_buffer);
-
+            long nv2i420_end = current_time_usec();
+            LOGE("nv2i420 cost %.2f",(nv2i420_end-nv2i420_start)/1000.0);
             if (toI420 == 0) {
                 LOGE("NV12ToI420 Success");
             } else {
