@@ -12,13 +12,13 @@ android {
         externalNativeBuild {
             cmake {
                 arguments "-DANDROID_ABI=armeabi-v7a","-DANDROID_ARM_NEON=ON"
-                cFlags  "-DLIBYUV_NEON"
+                cFlags  "-Wall -fexceptions -DHAVE_JPEG"
                 cppFlags "-std=c++11 -ljnigraphics"
             }
-          /*  ndk {
+            ndk {
                 abiFilters "armeabi-v7a"
                 //, "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
-            }*/
+            }
         }
 
     }

@@ -107,31 +107,46 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
-              src/main/cpp/libyuv/compare.cc
-			  src/main/cpp/libyuv/compare_common.cc
-			  src/main/cpp/libyuv/convert.cc
-			  src/main/cpp/libyuv/convert_argb.cc
-			  src/main/cpp/libyuv/convert_from.cc
-			  src/main/cpp/libyuv/convert_from_argb.cc
-			  src/main/cpp/libyuv/convert_to_argb.cc
-			  src/main/cpp/libyuv/convert_to_i420.cc
-			  src/main/cpp/libyuv/cpu_id.cc
-			  src/main/cpp/libyuv/planar_functions.cc
-			  src/main/cpp/libyuv/rotate.cc
-			  src/main/cpp/libyuv/rotate_any.cc
-			  src/main/cpp/libyuv/rotate_argb.cc
-			  src/main/cpp/libyuv/rotate_common.cc
-			  src/main/cpp/libyuv/row_any.cc
-			  src/main/cpp/libyuv/row_common.cc
-			  src/main/cpp/libyuv/scale.cc
-			  src/main/cpp/libyuv/scale_any.cc
-			  src/main/cpp/libyuv/scale_argb.cc
-			  src/main/cpp/libyuv/scale_common.cc
-			  src/main/cpp/libyuv/video_common.cc
-			  src/main/cpp/libyuv/compare_neon.cc
-			  src/main/cpp/libyuv/rotate_neon.cc
-			  src/main/cpp/libyuv/row_neon.cc
-			  src/main/cpp/libyuv/scale_neon.cc
+                src/main/cpp/libyuv/compare.cc
+                src/main/cpp/libyuv/compare_common.cc
+                src/main/cpp/libyuv/compare_gcc.cc
+                src/main/cpp/libyuv/compare_msa.cc
+                src/main/cpp/libyuv/compare_neon.cc
+                src/main/cpp/libyuv/compare_neon64.cc
+                src/main/cpp/libyuv/convert.cc
+                src/main/cpp/libyuv/convert_argb.cc
+                src/main/cpp/libyuv/convert_from.cc
+                src/main/cpp/libyuv/convert_from_argb.cc
+                src/main/cpp/libyuv/convert_to_argb.cc
+                src/main/cpp/libyuv/convert_to_i420.cc
+                src/main/cpp/libyuv/cpu_id.cc
+                src/main/cpp/libyuv/planar_functions.cc
+                src/main/cpp/libyuv/rotate.cc
+                src/main/cpp/libyuv/rotate_any.cc
+                src/main/cpp/libyuv/rotate_argb.cc
+                src/main/cpp/libyuv/rotate_common.cc
+                src/main/cpp/libyuv/rotate_gcc.cc
+                src/main/cpp/libyuv/rotate_msa.cc
+                src/main/cpp/libyuv/rotate_neon.cc
+                src/main/cpp/libyuv/rotate_neon64.cc
+                src/main/cpp/libyuv/row_any.cc
+                src/main/cpp/libyuv/row_common.cc
+                src/main/cpp/libyuv/row_gcc.cc
+                src/main/cpp/libyuv/row_msa.cc
+                src/main/cpp/libyuv/row_neon.cc
+                src/main/cpp/libyuv/row_neon64.cc
+                src/main/cpp/libyuv/scale.cc
+                src/main/cpp/libyuv/scale_any.cc
+                src/main/cpp/libyuv/scale_argb.cc
+                src/main/cpp/libyuv/scale_common.cc
+                src/main/cpp/libyuv/scale_gcc.cc
+                src/main/cpp/libyuv/scale_msa.cc
+                src/main/cpp/libyuv/scale_neon.cc
+                src/main/cpp/libyuv/scale_neon64.cc
+                src/main/cpp/libyuv/video_common.cc
+                src/main/cpp/libyuv/convert_jpeg.cc
+                src/main/cpp/libyuv/mjpeg_decoder.cc
+                src/main/cpp/libyuv/mjpeg_validate.cc
              )
 
 set_target_properties(

@@ -55,8 +55,8 @@ public class MyYUV {
     }
 
     synchronized public void setVaFrame(VAFrame vaFrame) {
-        if (this.vaFrame != null) {
-            vaFrame.destory();
+        if (this.vaFrame != null && this.vaFrame!=vaFrame) {
+            this.vaFrame.destory();
         }
         this.vaFrame = vaFrame;
     }

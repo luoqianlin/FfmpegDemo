@@ -174,7 +174,7 @@ int VideoCodec::init(const string input_file,const int video_width,const int vid
         LOGE("%s %s 格式,使能硬解码",input_file.c_str(),iter->second);
         codec = avcodec_find_decoder_by_name(iter->second);
     }
-    codec = NULL;
+//    codec = NULL;
     if (codec == NULL) {
         LOGE("%s 软解",input_file.c_str());
         codec = avcodec_find_decoder(avctx->codec_id);
@@ -1200,19 +1200,77 @@ int VideoCodec::decode_next_frame(AVFrame *yuvFrame) {
                 continue;
             }
 
-//            if(yuvFrame->format==AV_PIX_FMT_NV21){
-//                LOGE("NV21");
-//            }else if(yuvFrame->format == AV_PIX_FMT_NV12){
-//                LOGE("NV12");
-//            }else if(yuvFrame->format == AV_PIX_FMT_YUV420P){
-//                LOGE("YUV420P");
-//            }
+
+            if(yuvFrame->format==AV_PIX_FMT_NV21){
+                LOGE("NV21");
+            }else if(yuvFrame->format == AV_PIX_FMT_NV12){
+                LOGE("NV12");
+            }else if(yuvFrame->format == AV_PIX_FMT_YUV420P){
+                LOGE("YUV420P");
+            }
 //            const char *primaries_name = av_color_primaries_name(yuvFrame->color_primaries);
 //            LOGE("av_color_primaries_name:%s,color range:%d,colorspace:%d",primaries_name,yuvFrame->color_range,yuvFrame->colorspace);
 //            LOGE("width:%d,height:%d,linesize[0]:%d,linesize[1]:%d,linesize[2]:%d,data[0]:%p,data[1]:%p,data[1]:%p",
 //                 yuvFrame->width,yuvFrame->height,yuvFrame->linesize[0],yuvFrame->linesize[1],yuvFrame->linesize[2],
 //                yuvFrame->data[0],yuvFrame->data[1],yuvFrame->data[2]
 //            );
+             /* int NV12ToI420(const uint8_t* src_y,
+               int src_stride_y,
+               const uint8_t* src_uv,
+               int src_stride_uv,
+               uint8_t* dst_y,
+               int dst_stride_y,
+               uint8_t* dst_u,
+               int dst_stride_u,
+               uint8_t* dst_v,
+               int dst_stride_v,
+               int width,
+               int height);
+             * */
+            LOGE("width:%d,height:%d", yuvFrame->width, yuvFrame->height);
+            for (int i = 0; i < 3; i++) {
+                LOGE("linesize[%d]:%d,data[%d]:%p", i, yuvFrame->linesize[i], i, yuvFrame->data[i]);
+            }
+            uint8_t *yuv_buffer = static_cast<uint8_t *>(malloc((sizeof(uint8_t) * yuvFrame->height * yuvFrame->width * 3) >> 1));
+            uint8_t *dst_y = yuv_buffer;
+
+            uint8_t *dst_u = yuv_buffer + (yuvFrame->height * yuvFrame->width);
+
+            uint8_t *dst_v = yuv_buffer + (yuvFrame->height * yuvFrame->width * 5>>2);
+
+//            int dst_stride_y = yuvFrame->height * yuvFrame->width;
+//            uint8_t *dst_y = static_cast<uint8_t *>(malloc(sizeof(uint8) * dst_stride_y));
+//
+//            int dst_stride_u = yuvFrame->height * yuvFrame->width >> 2;
+//            uint8_t *dst_u = static_cast<uint8_t *>(malloc(sizeof(uint8) * dst_stride_u));
+//
+//            int dst_stride_v = yuvFrame->height * yuvFrame->width >> 2;
+//            uint8_t *dst_v = static_cast<uint8_t *>(malloc(sizeof(uint8) * dst_stride_v));
+
+            int toI420 = libyuv::NV12ToI420(yuvFrame->data[0], yuvFrame->width,
+                                            yuvFrame->data[1], yuvFrame->width,
+                                            dst_y, yuvFrame->width,
+                                            dst_u, yuvFrame->width >> 1,
+                                            dst_v, yuvFrame->width >> 1,
+                                            yuvFrame->width, yuvFrame->height
+            );
+//            av_frame_unref(yuvFrame);
+            yuvFrame->linesize[0] = yuvFrame->width;
+            yuvFrame->data[0] = dst_y;
+
+            yuvFrame->linesize[1] = yuvFrame->width >> 1;
+            yuvFrame->data[1] = dst_u;
+
+            yuvFrame->linesize[2] = yuvFrame->width >> 1;
+            yuvFrame->data[2] = dst_v;
+            yuvFrame->format = AV_PIX_FMT_YUV420P;
+            yuvFrame->extended_data= reinterpret_cast<uint8_t **>(yuv_buffer);
+
+            if (toI420 == 0) {
+                LOGE("NV12ToI420 Success");
+            } else {
+                LOGE("NV12ToI420 fail");
+            }
 
             av_packet_unref(pkt);
             break;

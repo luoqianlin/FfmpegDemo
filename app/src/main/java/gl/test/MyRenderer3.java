@@ -43,7 +43,7 @@ public class MyRenderer3 implements GLSurfaceView.Renderer {
     long startTime;
      int width;
     int height;
-    private String  file = Environment.getExternalStorageDirectory()+"/VisualArts/materials/6b97f7d5fea76ef1db59b36d8eba7bea.mkv";
+    private String  file = Environment.getExternalStorageDirectory()+"/VisualArts/materials/1d01d7f5180f7a03971861745130af11.avi";
 
     public MyRenderer3(GLSurfaceView glSurfaceView) {
         this.glSurfaceView=glSurfaceView;
