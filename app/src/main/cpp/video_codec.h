@@ -79,6 +79,9 @@ public:
 
     void convert_format(AVFrame *&yuvFrame, AVPixelFormat dst_pix_fmt) const;
     static void av_init();
+    int get_video_raw_height();
+
+    int get_video_raw_width();
 };
 
 

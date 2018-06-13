@@ -793,7 +793,7 @@ int VideoCodec::decode_next_frame(AVFrame * &yuvFrame) {
                 continue;
             }
             const char *pix_fmt_name = av_get_pix_fmt_name(static_cast<AVPixelFormat>(yuvFrame->format));
-#ifdef  AV_LOG_XXX
+//#ifdef  AV_LOG_XXX
             LOGI("fix_fmt:%s(%d),width:%d,height:%d,linesize[0]:%d,linesize[1]:%d,linesize[2]:%d,data[0]:%p,data[1]:%p,data[1]:%p",
                  pix_fmt_name,this->avctx->pix_fmt,yuvFrame->width,yuvFrame->height,yuvFrame->linesize[0],yuvFrame->linesize[1],yuvFrame->linesize[2],
                  yuvFrame->data[0],yuvFrame->data[1],yuvFrame->data[2]
@@ -801,7 +801,7 @@ int VideoCodec::decode_next_frame(AVFrame * &yuvFrame) {
             const char *primaries_name = av_color_primaries_name(yuvFrame->color_primaries);
             LOGI("av_color_primaries_name:%s,color range:%d,colorspace:%d",
                  primaries_name,yuvFrame->color_range,yuvFrame->colorspace);
-#endif
+//#endif
             const AVCodec *codec = this->avctx->codec;
             int convert=0;
             if(codec!=NULL) {
@@ -930,4 +930,10 @@ void VideoCodec::convert_format(AVFrame *&yuvFrame,AVPixelFormat dst_pix_fmt) co
         sws_freeContext(sws_ctx);
     }
 }
+int VideoCodec::get_video_raw_width() {
+    return this->avctx->width;
+}
 
+int VideoCodec::get_video_raw_height() {
+    return this->avctx->height;
+}

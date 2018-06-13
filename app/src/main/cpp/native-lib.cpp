@@ -479,9 +479,7 @@ int convert_first_frame_to_png(std::string const & inputVideoFileName, std::stri
 #pragma clang diagnostic pop
 
 
-#ifdef __cplusplus
-}
-#endif
+
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -1059,7 +1057,21 @@ void bindYUVTexture(GLuint yTextureId, GLuint uTextureId, GLuint vTextureId, con
     glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE,  yuvFrame->linesize[2], yuvFrame->height/2,0,
                  GL_LUMINANCE, GL_UNSIGNED_BYTE, yuvFrame->data[2]);
 }
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_sansi_va_VideoCodec_getVideoRawHeight__J(JNIEnv *env, jobject instance, jlong ptr) {
+    return (reinterpret_cast<VideoCodec *>(ptr))->get_video_raw_height();
+
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_sansi_va_VideoCodec_getVideoRawWidth__J(JNIEnv *env, jobject instance, jlong ptr) {
+    return (reinterpret_cast<VideoCodec *>(ptr))->get_video_raw_width();
+}
 
 
 
-
+#ifdef __cplusplus
+}
+#endif

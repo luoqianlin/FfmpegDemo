@@ -100,4 +100,15 @@ public class VideoCodec {
 
 
     }
+
+    private native  int getVideoRawHeight(long ptr);
+    private native  int getVideoRawWidth(long ptr);
+
+    public int getVideoRawHeight(){
+        return getVideoRawHeight(this.ptr);
+    }
+
+    public int getVideoRawWidth(){
+        return getVideoRawWidth(this.ptr);
+    }
 }

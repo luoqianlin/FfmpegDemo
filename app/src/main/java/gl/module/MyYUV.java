@@ -1,141 +1,22 @@
 package gl.module;
 
-import android.graphics.PointF;
 import android.opengl.GLES20;
 
 import com.sansi.va.VAFrame;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
-import java.util.Arrays;
-
 import gl.context.MyGLYUVContext;
-import gl.tools.Tools;
 
 
-public class MyYUV {
-
+public class MyYUV  extends VBO{
     MyGLYUVContext glYuvTexturePaint;
-
-    float [] vertexData= {
-            1.0f, 1.0f, 0.0f,
-            -1.0f, 1.0f, 0.0f,
-            -1.0f, -1.0f, 0.0f,
-            1.0f, -1.0f, 0.0f
-    };
-
-    float []textureVertexData = {
-            /*    1.0f, 0.0f,//右下
-                        0.0f, 0.0f,//左下
-                        1.0f, 1.0f,//右上
-                        0.0f, 1.0f//左上*/
-
-            1f, 0,  // bottom right
-            0, 0,  // bottom left
-            0, 1f,  // top left
-            1, 1,  // top right
-    };
-
-    private  FloatBuffer mVertexBuffer;
-    private final FloatBuffer mTexVertexBuffer;
-    private final ShortBuffer mVertexIndexBuffer;
-
     private VAFrame vaFrame;
-    private int winHeight;
-    private  int winWidth;
-    private int x;
-    private  int y;
-    private  final short[] VERTEX_INDEX = {
-            0, 1, 2, 0, 2, 3
-    };
-    private int width;
-    private int height;
-
-    public MyYUV(MyGLYUVContext glYuvTexturePaint) {
-        this.glYuvTexturePaint = glYuvTexturePaint;
-        mVertexBuffer = ByteBuffer.allocateDirect(vertexData.length * 4)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(vertexData);
-        mVertexBuffer.flip();
-
-        mTexVertexBuffer = ByteBuffer.allocateDirect(textureVertexData.length * 4)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(textureVertexData);
-        mTexVertexBuffer.flip();
-
-        mVertexIndexBuffer = ByteBuffer.allocateDirect(VERTEX_INDEX.length * 2)
-                .order(ByteOrder.nativeOrder())
-                .asShortBuffer()
-                .put(VERTEX_INDEX);
-        mVertexIndexBuffer.flip();
-
-    }
-
 
     public MyYUV(int x, int y, int winWidth, int winHeight,
                  int targetWidth, int targetHeight, MyGLYUVContext glYuvTexturePaint) {
+        super(x,y,winWidth,winHeight,targetWidth,targetHeight);
         System.out.println("构造函数");
         this.glYuvTexturePaint = glYuvTexturePaint;
-        this.winHeight = winHeight;
-        this.winWidth = winWidth;
-        setRect(x, y, targetWidth, targetHeight);
-        mTexVertexBuffer = ByteBuffer.allocateDirect(textureVertexData.length * 4)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(textureVertexData);
-        mTexVertexBuffer.flip();
-
-        mVertexIndexBuffer = ByteBuffer.allocateDirect(VERTEX_INDEX.length * 2)
-                .order(ByteOrder.nativeOrder())
-                .asShortBuffer()
-                .put(VERTEX_INDEX);
-        mVertexIndexBuffer.flip();
     }
-
-    private void setRect(int x, int y, int targetWidth, int targetHeight) {
-        this.width = targetWidth;
-        this.height = targetHeight;
-        this.x = x;
-        this.y = y;
-        PointF pointF=new PointF();
-        for (int i = 0; i < vertexData.length; i += 3) {
-            if (i == 0) {
-                Tools.toGLCoordinate(x + width, y, this.winWidth, this.winHeight, pointF);
-                vertexData[i] = pointF.x;
-                vertexData[i + 1] = pointF.y;
-            } else if (i == 3) {
-                Tools.toGLCoordinate(x, y, this.winWidth, this.winHeight, pointF);
-                vertexData[i] = pointF.x;
-                vertexData[i + 1] = pointF.y;
-            } else if (i == 6) {
-                Tools.toGLCoordinate(x, y + height, this.winWidth, this.winHeight, pointF);
-                vertexData[i] = pointF.x;
-                vertexData[i + 1] = pointF.y;
-            } else if (i == 9) {
-                Tools.toGLCoordinate(x + width, y + height, this.winWidth, this.winHeight, pointF);
-                vertexData[i] = pointF.x;
-                vertexData[i + 1] = pointF.y;
-            }
-        }
-        System.out.println("****>"+ Arrays.toString(vertexData));
-        if(mVertexBuffer==null) {
-            mVertexBuffer = ByteBuffer.allocateDirect(vertexData.length * 4)
-                    .order(ByteOrder.nativeOrder())
-                    .asFloatBuffer()
-                    .put(vertexData);
-            mVertexBuffer.flip();
-        }else{
-            mVertexBuffer.clear();
-            mVertexBuffer.put(vertexData);
-            mVertexBuffer.flip();
-        }
-
-    }
-
 
     public VAFrame getVaFrame() {
         return vaFrame;
@@ -146,6 +27,7 @@ public class MyYUV {
             this.vaFrame.destory();
         }
         this.vaFrame = vaFrame;
+        setDisplyType(this.vaFrame.getWidth(),this.vaFrame.getHeight(), VBO.ASPECT_RATIO);
     }
 
     boolean isdraw=false;

@@ -14,6 +14,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import cn.test.ffmpegdemo.MyApplication;
+import cn.test.ffmpegdemo.R;
 import gl.context.MyGLContext2;
 import gl.context.MyGLNV12Context;
 import gl.context.MyGLYUVContext;
@@ -21,7 +22,6 @@ import gl.module.GL_RGB24;
 import gl.module.MyBitmap;
 import gl.module.MyNV12;
 import gl.module.MyYUV;
-import cn.test.ffmpegdemo.R;
 
 public class MyRenderer3 implements GLSurfaceView.Renderer {
 
@@ -41,7 +41,7 @@ public class MyRenderer3 implements GLSurfaceView.Renderer {
     long startTime;
      int mWidth;
     int mHeight;
-    private String  file = Environment.getExternalStorageDirectory()+"/VisualArts/materials/1d01d7f5180f7a03971861745130af11.avi";
+    private String  file = Environment.getExternalStorageDirectory()+"/VisualArts/materials/6b97f7d5fea76ef1db59b36d8eba7bea.mkv";
 
     public MyRenderer3(GLSurfaceView glSurfaceView) {
         this.glSurfaceView=glSurfaceView;
@@ -60,17 +60,20 @@ public class MyRenderer3 implements GLSurfaceView.Renderer {
         this.mHeight =height;
         this.mWidth =width;
         GLES20.glViewport(0, 0, width, height);
-        Bitmap bitmap = BitmapFactory.decodeResource(MyApplication.getApplication().getResources(), R.mipmap.ic_launcher);
+        Bitmap bitmap = BitmapFactory.decodeResource(MyApplication.getApplication().getResources(), R.mipmap.hydrangeas);
         System.out.println("===========onSurfaceChanged===========");
-//      Bitmap bitmap = BitmapFactory.decodeResource(MyApplication.getApplication().getResources(), R.mipmap.ic_launcher);
-//      myBitmap=new MyBitmap(mWidth/2-bitmap.getWidth()/2,mHeight/2-bitmap.getHeight()/2,mWidth,mHeight,bitmap,glContext2);
+        int targetWidth = bitmap.getWidth() *2;
+        int targetHeight = bitmap.getHeight();
+        myBitmap=new MyBitmap(mWidth/2-targetWidth/2,mHeight/2-targetHeight/2,mWidth,mHeight,
+                targetWidth, targetHeight,
+                  bitmap,glContext2,MyBitmap.ASPECT_RATIO);
         myGLYUVContext = new MyGLYUVContext();
         myYUV = new MyYUV(0,0,width,height,width/2,height/2,myGLYUVContext);
-        this.glRgb24=new GL_RGB24(0,0,width,height,width/2,height/2,glContext2);
         videoCodec = new VideoCodec(file);
         videoCodec.open();
         int retV = videoCodec.init(width, height);
         System.out.println("videoCodec ret:" + retV);
+        this.glRgb24 = new GL_RGB24(0, 0, width, height,width , height, glContext2);
     }
 /**
  * GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT
@@ -105,7 +108,7 @@ boolean first = false;
             long renderend=System.currentTimeMillis();
 //            System.out.printf("render cost:%d\n",(renderend-renderstart));
 
-        }else{
+      }else{
 //            System.out.println("is null end");
             if(!first) {
                 System.out.println("cost:" + (System.currentTimeMillis() - startTime) / 1000.0 + "s");

@@ -86,7 +86,7 @@ public class MyRenderer implements GLSurfaceView.Renderer {
         System.out.println("===========onSurfaceChanged===========");
 //                Bitmap bitmap = BitmapFactory.decodeResource(MyApplication.getApplication().getResources(), R.mipmap.ic_launcher);
 //        myBitmap=new MyBitmap(mWidth/2-bitmap.getWidth()/2,mHeight/2-bitmap.getHeight()/2,mWidth,mHeight,bitmap,glContext2);
-        myBitmap=new MyBitmap(0,0,width,height,bitmap,glContext2);
+        myBitmap=new MyBitmap(0,0,width,height,bitmap.getWidth(),bitmap.getHeight(),bitmap,glContext2,MyBitmap.FIT_XY);
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {

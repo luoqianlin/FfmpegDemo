@@ -5,45 +5,11 @@ import android.opengl.GLES20;
 
 import com.sansi.va.VAFrame;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
-import java.util.Arrays;
-
 import gl.context.MyGLContext2;
 
-public class GL_RGB24 {
-
+public class GL_RGB24 extends VBO {
     private MyGLContext2 myGLContext2;
-
     private  int mTexName;
-    int targetWidth;
-    int targetHeight;
-
-    private  final float[] VERTEX = {   // in counterclockwise order:
-            1f, 0.5f, 0.0f,   // top right
-            -1.0f, 0.5f, 0.0f,  // top left
-            -1.0f, -0.5f, 0.0f, // bottom left
-            1.0f, -0.5f, 0.0f,  // bottom right
-    };
-    private  final short[] VERTEX_INDEX = {
-            0, 1, 2, 0, 2, 3
-    };
-    private  final float[] TEX_VERTEX = {   // in clockwise order:
-            1f, 0,  // bottom right
-            0, 0,  // bottom left
-            0, 1f,  // top left
-           1, 1,  // top right
-    };
-
-    int x;
-    int y;
-    int winWidth;
-    int winHeight;
-    private final FloatBuffer mVertexBuffer;
-    private final FloatBuffer mTexVertexBuffer;
-    private final ShortBuffer mVertexIndexBuffer;
     private  int deltaX=10;
 
     private VAFrame vaFrame;
@@ -101,6 +67,7 @@ public class GL_RGB24 {
             this.vaFrame.destory();
         }
         this.vaFrame = vaFrame;
+        setDisplyType(vaFrame.getWidth(),vaFrame.getHeight(), VBO.FIT_REPEAT);
     }
 
     public int getX() {
@@ -123,60 +90,10 @@ public class GL_RGB24 {
                     int winWidth, int winHeight,
                     int targetWidth, int targetHeight,
                     MyGLContext2 myGLContext2) {
+        super(x,y,winWidth,winHeight,targetWidth,targetHeight);
         System.out.println("构造函数");
         this.myGLContext2=myGLContext2;
-        this.winHeight=winHeight;
-        this.winWidth=winWidth;
-        this.targetWidth=targetWidth;
-        this.targetHeight=targetHeight;
-        this.x = x;
-        this.y = y;
-        PointF pointF=new PointF();
-        for (int i = 0; i < VERTEX.length; i += 3) {
-            if(i==0) {
-                toGLCoordinate(x + targetWidth, y, winWidth, winHeight, pointF);
-                VERTEX[i] = pointF.x;
-                VERTEX[i + 1] = pointF.y;
-            }else if(i==3){
-                toGLCoordinate(x, y, winWidth, winHeight, pointF);
-                VERTEX[i] = pointF.x;
-                VERTEX[i + 1] = pointF.y;
-            }else if(i==6){
-                toGLCoordinate(x, y+ targetHeight, winWidth, winHeight, pointF);
-                VERTEX[i] = pointF.x;
-                VERTEX[i + 1] = pointF.y;
-            }else if(i==9){
-                toGLCoordinate(x+ targetWidth, y+ targetHeight, winWidth, winHeight, pointF);
-                VERTEX[i] = pointF.x;
-                VERTEX[i + 1] = pointF.y;
-            }
-        }
-
-        System.out.println("****>"+Arrays.toString(VERTEX));
-        mVertexBuffer = ByteBuffer.allocateDirect(VERTEX.length * 4)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(VERTEX);
-        mVertexBuffer.flip();
-
-        mVertexIndexBuffer = ByteBuffer.allocateDirect(VERTEX_INDEX.length * 2)
-                .order(ByteOrder.nativeOrder())
-                .asShortBuffer()
-                .put(VERTEX_INDEX);
-        mVertexIndexBuffer.flip();
-
-        mTexVertexBuffer = ByteBuffer.allocateDirect(TEX_VERTEX.length * 4)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(TEX_VERTEX);
-        mTexVertexBuffer.flip();
     }
-
-    public void toGLCoordinate(int x, int y, int winWidth, int winHeight,PointF pointF) {
-        pointF.x=2.0f * x / winWidth - 1.0f;
-        pointF.y=1.0f - (2.0f * y / winHeight);
-    }
-
 
     public synchronized void draw(){
         if (vaFrame == null) return;
