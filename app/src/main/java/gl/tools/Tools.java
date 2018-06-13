@@ -1,5 +1,7 @@
 package gl.tools;
 
+import android.graphics.PointF;
+
 import com.google.common.io.ByteStreams;
 
 import java.io.IOException;
@@ -26,5 +28,9 @@ public class Tools {
         } catch (IOException e) {
             throw  new RuntimeException(e);
         }
+    }
+    public static void toGLCoordinate(int x, int y, int winWidth, int winHeight,PointF pointF) {
+        pointF.x = 2.0f * x / winWidth - 1.0f;
+        pointF.y = 1.0f - (2.0f * y / winHeight);
     }
 }

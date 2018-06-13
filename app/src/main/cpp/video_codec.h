@@ -75,8 +75,10 @@ public:
     int decode_next_frame_tobitmap(JNIEnv * env,jobject bitmap);
     int decode_play(JNIEnv *env,jobject surface);
 
-    int decode_next_frame(AVFrame*av_frame);
+    int decode_next_frame(AVFrame*&av_frame);
 
+    void convert_format(AVFrame *&yuvFrame, AVPixelFormat dst_pix_fmt) const;
+    static void av_init();
 };
 
 

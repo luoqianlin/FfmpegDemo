@@ -6,6 +6,7 @@
 #include <android/native_window_jni.h>
 
 #include "log.h"
+#include "video_codec.h"
 
 
 
@@ -553,4 +554,512 @@ bool save_pic(AVFrame *frm,  AVCodecContext *  pCodecCtx, AVCodecID cid, const c
     return true;
 }
 #pragma clang diagnostic pop
+
+
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_sansi_va_VideoCodec_avInitialize(JNIEnv *env, jclass type) {
+    VideoCodec::av_init();
+}
+
+
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_sansi_va_VideoCodec_init__JLjava_lang_String_2(JNIEnv *env, jobject instance, jlong ptr,
+                                                        jstring file_) {
+    int ret;
+    const char *file = env->GetStringUTFChars(file_, 0);
+    LOGD("init file:%s", file);
+    ret = (reinterpret_cast<VideoCodec *>(ptr))->init(string(file),0,0);
+    env->ReleaseStringUTFChars(file_, file);
+    return ret;
+}
+
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_sansi_va_VideoCodec_init__JLjava_lang_String_2II(JNIEnv *env, jobject instance, jlong ptr,
+                                                          jstring file_, jint videoWidth,
+                                                          jint videoHeight) {
+    int ret;
+    const char *file = env->GetStringUTFChars(file_, 0);
+    LOGD("init file:%s,videoWidth:%d,videoHeight:%d", file,videoWidth,videoHeight);
+    ret = (reinterpret_cast<VideoCodec *>(ptr))->init(string(file),videoWidth,videoHeight);
+    env->ReleaseStringUTFChars(file_, file);
+    return ret;
+
+    env->ReleaseStringUTFChars(file_, file);
+}
+
+
+extern "C"
+JNIEXPORT jlong JNICALL
+Java_com_sansi_va_VideoCodec_create(JNIEnv *env, jobject instance) {
+    return (jlong) new VideoCodec();
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_sansi_va_VideoCodec_free(JNIEnv *env, jobject instance, jlong ptr) {
+    delete reinterpret_cast<VideoCodec *>(ptr);
+}
+
+
+extern "C"
+JNIEXPORT jbyteArray JNICALL
+Java_com_sansi_va_VideoCodec_getNextFrame__J(JNIEnv *env, jobject instance, jlong ptr) {
+    char *buffer=NULL;
+    size_t len=0;
+    LOGD("jni nextframe 被动调用ptr=%04lx",ptr);
+    int ret = (reinterpret_cast<VideoCodec *>(ptr))->decode_next_frame(buffer, len);
+    if (ret == AVERROR_EOF) {
+        LOGI("frame 结束");
+    }
+    if(buffer==NULL || len <1)return NULL;
+    char c;
+    for (int i = 0; i < len; i += 4) {
+        c = buffer[i];
+        buffer[i] = buffer[i + 3];
+        buffer[i + 3] = c;
+    }
+    jbyteArray pArray = env->NewByteArray(len);
+    env->SetByteArrayRegion(pArray, 0, len, reinterpret_cast<const jbyte *>(buffer));
+    delete buffer;
+    return pArray;
+}
+
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_sansi_va_VideoCodec_display(JNIEnv *env, jobject instance, jlong ptr, jobject surface) {
+
+    int ret = (reinterpret_cast<VideoCodec *>(ptr))->decode_next_frame(env,surface);
+    if (ret == AVERROR_EOF) {
+        LOGI("frame 结束");
+        return 1;
+    }
+    return 0;
+
+}
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_sansi_va_VideoCodec_fillBitmap(JNIEnv *env, jobject instance, jlong ptr, jobject bitmap) {
+    int ret = (reinterpret_cast<VideoCodec *>(ptr))->decode_next_frame_tobitmap(env,bitmap);
+    if (ret == AVERROR_EOF) {
+        LOGI("frame 结束");
+        return 1;
+    }
+    return 0;
+
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_sansi_va_VideoCodec_play__JLandroid_view_Surface_2(JNIEnv *env, jobject instance,
+                                                            jlong ptr, jobject surface) {
+    int ret = (reinterpret_cast<VideoCodec *>(ptr))->decode_play(env,surface);
+    if (ret == AVERROR_EOF) {
+        LOGI("frame 结束");
+        return ret;
+    }
+    return ret;
+
+}
+
+
+extern "C"
+JNIEXPORT jobject JNICALL
+Java_com_sansi_va_VideoCodec_nextFrame__J(JNIEnv *env, jobject instance, jlong ptr) {
+    AVFrame *yuvFrame = NULL;
+    int ret = (reinterpret_cast<VideoCodec *>(ptr))->decode_next_frame(yuvFrame);
+    if (ret == AVERROR_EOF) {
+//        LOGI("frame 结束");
+        return NULL;
+    }
+    jclass clazz_vaFrame = env->FindClass("com/sansi/va/VAFrame");
+    jmethodID mid_vaFrame = env->GetMethodID(clazz_vaFrame, "<init>", "()V");
+    jobject avFrame = env->NewObject(clazz_vaFrame, mid_vaFrame);
+    jmethodID setWidth_id = env->GetMethodID(clazz_vaFrame, "setWidth", "(I)V");
+    jmethodID setHeight_id = env->GetMethodID(clazz_vaFrame, "setHeight", "(I)V");
+    jmethodID setLinesize_id = env->GetMethodID(clazz_vaFrame, "setLinesize", "([I)V");
+    jmethodID setData_id = env->GetMethodID(clazz_vaFrame, "setData", "([Ljava/nio/Buffer;)V");
+    jmethodID  setFormat_id = env->GetMethodID(clazz_vaFrame,"setFormat","(I)V");
+
+    jfieldID ptr_id = env->GetFieldID(clazz_vaFrame, "ptr", "J");
+
+    env->CallVoidMethod(avFrame,setWidth_id,yuvFrame->width);
+    env->CallVoidMethod(avFrame,setHeight_id,yuvFrame->height);
+    env->CallVoidMethod(avFrame,setFormat_id,yuvFrame->format);
+
+    jintArray linesize_arr = env->NewIntArray(AV_NUM_DATA_POINTERS);
+    env->SetIntArrayRegion(linesize_arr,0,AV_NUM_DATA_POINTERS,yuvFrame->linesize);
+    env->CallVoidMethod(avFrame,setLinesize_id,linesize_arr);
+    jobjectArray byteBufferArray = env->NewObjectArray(AV_NUM_DATA_POINTERS, env->FindClass("java/nio/Buffer"), NULL);
+    for(int i=0;i<AV_NUM_DATA_POINTERS;i++){
+        if (yuvFrame->data[i] == NULL) {
+//            LOGI("i=%d is NULL", i);
+            break;
+        }
+        jobject byteBuffer = env->NewDirectByteBuffer(yuvFrame->data[i], yuvFrame->linesize[i]);
+        env->SetObjectArrayElement(byteBufferArray,i,byteBuffer);
+    }
+    env->CallVoidMethod(avFrame,setData_id,byteBufferArray);
+    env->SetLongField(avFrame,ptr_id,(jlong)yuvFrame);
+//    LOGI("ptr:%p",yuvFrame);
+//    av_frame_free(&yuvFrame);
+    return avFrame;
+}
+
+jint JNI_OnLoad(JavaVM* vm, void* reserved)
+{
+    LOGI("ffmpeg JNI_OnLoad");
+    av_jni_set_java_vm(vm, reserved);
+    return JNI_VERSION_1_6;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_sansi_va_VAFrame_destory__J(JNIEnv *env, jobject instance, jlong ptr) {
+//    LOGE("%p \n",(void*)ptr);
+    AVFrame *yuvFrame = reinterpret_cast<AVFrame *>(ptr);
+//    for (int i = 0; i < AV_NUM_DATA_POINTERS; i++) {
+//        if (yuvFrame->data[i]) {
+//            LOGD("%p",(void*)yuvFrame->data[i]);
+//            av_free(yuvFrame->data[i]);
+//            yuvFrame->data[i] = NULL;
+//        }
+//    }
+    av_frame_free(&yuvFrame);
+}
+
+#define GET_STR(x) #x
+const char *vertexShaderString = GET_STR(
+        attribute vec4 aPosition;
+        attribute mediump vec2 aTexCoord;
+        varying mediump vec2 vTexCoord;
+        void main() {
+            vTexCoord=vec2(aTexCoord.x,1.0-aTexCoord.y);
+            gl_Position = aPosition;
+        }
+);
+const char *fragmentShaderString = GET_STR(
+        precision mediump float;
+        varying highp vec2 vTexCoord;
+        uniform sampler2D yTexture;
+        uniform sampler2D uTexture;
+        uniform sampler2D vTexture;
+
+        const vec3 delyuv = vec3(-0.0 / 255.0, -128.0 / 255.0, -128.0 / 255.0);
+        const vec3 matYUVRGB1 = vec3(1.0, 0.0, 1.402);
+        const vec3 matYUVRGB2 = vec3(1.0, -0.344, -0.714);
+        const vec3 matYUVRGB3 = vec3(1.0, 1.772, 0.0);
+
+        void main() {
+            vec3 curResult;
+            highp vec3 yuv;
+            yuv.x = texture2D(yTexture, vTexCoord).r;
+            yuv.y = texture2D(uTexture, vTexCoord).r;
+            yuv.z = texture2D(vTexture, vTexCoord).r;
+
+            yuv += delyuv;
+
+            curResult.x = dot(yuv,matYUVRGB1);
+            curResult.y = dot(yuv,matYUVRGB2);
+            curResult.z = dot(yuv,matYUVRGB3);
+
+            gl_FragColor = vec4(curResult.rgb, 1.0);
+        }
+);
+
+void bindYUVTexture(GLuint yTextureId, GLuint uTextureId, GLuint vTextureId, const AVFrame *yuvFrame);
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_cn_test_ffmpegdemo_VideoSurfaceView_videoPlay(JNIEnv *env, jobject instance, jstring path_,
+                                                   jobject surface) {
+    const char *path = env->GetStringUTFChars(path_, 0);
+
+    /***
+     * ffmpeg 初始化
+     * **/
+    av_register_all();
+    AVFormatContext *fmt_ctx = avformat_alloc_context();
+    if (avformat_open_input(&fmt_ctx, path, NULL, NULL) < 0) {
+        return;
+    }
+    if (avformat_find_stream_info(fmt_ctx, NULL) < 0) {
+        return;
+    }
+    AVStream *avStream = NULL;
+    int video_stream_index = -1;
+    for (int i = 0; i < fmt_ctx->nb_streams; i++) {
+        if (fmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+            avStream =fmt_ctx->streams[i];
+            video_stream_index = i;
+            break;
+        }
+    }
+    if (video_stream_index == -1) {
+        return;
+    }
+    AVCodecContext *codec_ctx = avcodec_alloc_context3(NULL);
+    avcodec_parameters_to_context(codec_ctx, avStream->codecpar);
+    AVCodec *avCodec = avcodec_find_decoder(codec_ctx->codec_id);
+    if (avcodec_open2(codec_ctx, avCodec, NULL) < 0) {
+        return;
+    }
+    LOGI("pix_fmt:%d",codec_ctx->pix_fmt);
+    int y_size = codec_ctx->width * codec_ctx->height;
+    AVPacket *pkt = (AVPacket *) malloc(sizeof(AVPacket));
+    av_new_packet(pkt, y_size);
+    /**
+       *初始化egl
+       **/
+    EGLConfig eglConf;
+    EGLSurface eglWindow;
+    EGLContext eglCtx;
+    int windowWidth;
+    int windowHeight;
+    ANativeWindow *nativeWindow = ANativeWindow_fromSurface(env, surface);
+
+    EGLint configSpec[] = { EGL_RED_SIZE, 8,
+                            EGL_GREEN_SIZE, 8,
+                            EGL_BLUE_SIZE, 8,
+                            EGL_SURFACE_TYPE, EGL_WINDOW_BIT, EGL_NONE };
+
+    EGLDisplay eglDisp = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    EGLint eglMajVers, eglMinVers;
+    EGLint numConfigs;
+    eglInitialize(eglDisp, &eglMajVers, &eglMinVers);
+    eglChooseConfig(eglDisp, configSpec, &eglConf, 1, &numConfigs);
+
+    eglWindow = eglCreateWindowSurface(eglDisp, eglConf,nativeWindow, NULL);
+
+    eglQuerySurface(eglDisp,eglWindow,EGL_WIDTH,&windowWidth);
+    eglQuerySurface(eglDisp,eglWindow,EGL_HEIGHT,&windowHeight);
+    const EGLint ctxAttr[] = {
+            EGL_CONTEXT_CLIENT_VERSION, 2,
+            EGL_NONE
+    };
+    eglCtx = eglCreateContext(eglDisp, eglConf,EGL_NO_CONTEXT, ctxAttr);
+
+    eglMakeCurrent(eglDisp, eglWindow, eglWindow, eglCtx);
+
+    /**
+     * 设置opengl 要在egl初始化后进行
+     * **/
+    float *vertexData= new float[12]{
+            1.0f, -1.0f, 0.0f,
+            -1.0f, -1.0f, 0.0f,
+            1.0f, 1.0f, 0.0f,
+            -1.0f, 1.0f, 0.0f
+    };
+
+    float *textureVertexData = new float[8]{
+            1.0f, 0.0f,//右下
+            0.0f, 0.0f,//左下
+            1.0f, 1.0f,//右上
+            0.0f, 1.0f//左上
+    };
+
+    ShaderUtils *shaderUtils = new ShaderUtils();
+
+    GLuint programId = shaderUtils->createProgram(vertexShaderString,fragmentShaderString );
+    delete shaderUtils;
+    GLuint aPositionHandle = (GLuint) glGetAttribLocation(programId, "aPosition");
+    GLuint aTextureCoordHandle = (GLuint) glGetAttribLocation(programId, "aTexCoord");
+
+    GLuint textureSamplerHandleY = (GLuint) glGetUniformLocation(programId, "yTexture");
+    GLuint textureSamplerHandleU = (GLuint) glGetUniformLocation(programId, "uTexture");
+    GLuint textureSamplerHandleV = (GLuint) glGetUniformLocation(programId, "vTexture");
+
+    //因为没有用矩阵所以就手动自适应
+    int videoWidth = codec_ctx->width;
+    int videoHeight = codec_ctx->height;
+
+    int left,top,viewWidth,viewHeight;
+    if(windowHeight > windowWidth){
+        left = 0;
+        viewWidth = windowWidth;
+        viewHeight = (int)(videoHeight*1.0f/videoWidth*viewWidth);
+        top = (windowHeight - viewHeight)/2;
+    }else{
+        top = 0;
+        viewHeight = windowHeight;
+        viewWidth = (int)(videoWidth*1.0f/videoHeight*viewHeight);
+        left = (windowWidth - viewWidth)/2;
+    }
+//    glViewport(left, top, viewWidth, viewHeight);
+    glViewport(0, 0, videoWidth,videoHeight);
+
+    glUseProgram(programId);
+    glEnableVertexAttribArray(aPositionHandle);
+    glVertexAttribPointer(aPositionHandle, 3, GL_FLOAT, GL_FALSE,12, vertexData);
+    glEnableVertexAttribArray(aTextureCoordHandle);
+    glVertexAttribPointer(aTextureCoordHandle,2,GL_FLOAT,GL_FALSE,8,textureVertexData);
+    /***
+     * 初始化空的yuv纹理
+     * **/
+    GLuint yTextureId;
+    GLuint uTextureId;
+    GLuint vTextureId;
+    glGenTextures(1,&yTextureId);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D,yTextureId);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+
+
+    glUniform1i(textureSamplerHandleY,0);
+
+    glGenTextures(1,&uTextureId);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D,uTextureId);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+
+    glUniform1i(textureSamplerHandleU,1);
+
+    glGenTextures(1,&vTextureId);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D,vTextureId);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+
+    glUniform1i(textureSamplerHandleV,2);
+    struct SwsContext *sws_ctx = sws_getContext(codec_ctx->width,
+                                                codec_ctx->height,
+                                                codec_ctx->pix_fmt,
+                                                codec_ctx->width,
+                                                codec_ctx->height,
+                                                AV_PIX_FMT_YUV420P,
+                                                SWS_FAST_BILINEAR,
+                                                NULL,
+                                                NULL,
+                                                NULL);
+    AVFrame *pFrameyuv = av_frame_alloc();
+    int numBytes = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, codec_ctx->width, codec_ctx->height, 1);
+    uint8_t *buffer = (uint8_t *) av_malloc(numBytes * sizeof(uint8_t));
+    av_image_fill_arrays(pFrameyuv->data, pFrameyuv->linesize, buffer, AV_PIX_FMT_YUV420P,
+                         codec_ctx->width, codec_ctx->height, 1);
+    pFrameyuv->width=codec_ctx->width;
+    pFrameyuv->height=codec_ctx->height;
+    /***
+     * 开始解码
+     * **/
+    int ret;
+    while (1) {
+        if (av_read_frame(fmt_ctx, pkt) < 0) {
+            //播放结束
+            break;
+        }
+        if (pkt->stream_index == video_stream_index) {
+            ret = avcodec_send_packet(codec_ctx, pkt);
+            if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
+                av_packet_unref(pkt);
+                continue;
+            }
+            AVFrame *yuvFrame = av_frame_alloc();
+            ret = avcodec_receive_frame(codec_ctx, yuvFrame);
+            if (ret < 0 && ret != AVERROR_EOF) {
+                av_frame_free(&yuvFrame);
+                av_packet_unref(pkt);
+                continue;
+            }
+            if (codec_ctx->pix_fmt != AV_PIX_FMT_YUV420P) {
+                LOGE("不是YUV420P，进行转换");
+                sws_scale(sws_ctx, (uint8_t const *const *) yuvFrame->data,
+                          yuvFrame->linesize, 0, codec_ctx->height,
+                          pFrameyuv->data, pFrameyuv->linesize);
+                bindYUVTexture(yTextureId, uTextureId, vTextureId, pFrameyuv);
+            } else {
+//                LOGE("已经是YUV420P");
+                if(yuvFrame->key_frame == 1){
+                    LOGI("关键帧");
+                }else{
+                    LOGE("非关键帧:%d",yuvFrame->key_frame);
+                }
+                bindYUVTexture(yTextureId, uTextureId, vTextureId, yuvFrame);
+            }
+            /***
+              * 解码后的数据更新到yuv纹理中
+            * **/
+
+
+
+            /*
+             *
+             *
+            glBindTexture(GL_TEXTURE_2D, texture[0]);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, frame->linesize[0], frame->height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame->data[0]);
+            glBindTexture(GL_TEXTURE_2D, texture[1]);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, frame->linesize[1], frame->height / 2, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame->data[1]);
+            glBindTexture(GL_TEXTURE_2D, texture[2]);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, frame->linesize[2], frame->height / 2, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame->data[2]);
+             */
+            /***
+                       * 纹理更新完成后开始绘制
+                       ***/
+            glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+            eglSwapBuffers(eglDisp, eglWindow);
+
+            av_frame_free(&yuvFrame);
+        }
+        av_packet_unref(pkt);
+    }
+    /***
+     * 释放资源
+     * **/
+    delete[] vertexData;
+    delete[] textureVertexData;
+
+    eglMakeCurrent(eglDisp, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglDestroyContext(eglDisp, eglCtx);
+    eglDestroySurface(eglDisp, eglWindow);
+    eglTerminate(eglDisp);
+    eglDisp = EGL_NO_DISPLAY;
+    eglWindow = EGL_NO_SURFACE;
+    eglCtx = EGL_NO_CONTEXT;
+
+    avcodec_close(codec_ctx);
+    avformat_close_input(&fmt_ctx);
+
+    env->ReleaseStringUTFChars(path_, path);
+}
+
+
+
+
+
+void bindYUVTexture(GLuint yTextureId, GLuint uTextureId, GLuint vTextureId, const AVFrame *yuvFrame) {
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, yTextureId);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, yuvFrame->linesize[0], yuvFrame->height,0,
+                 GL_LUMINANCE, GL_UNSIGNED_BYTE, yuvFrame->data[0]);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, uTextureId);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE,  yuvFrame->linesize[1], yuvFrame->height/2,0,
+                 GL_LUMINANCE, GL_UNSIGNED_BYTE, yuvFrame->data[1]);
+
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, vTextureId);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE,  yuvFrame->linesize[2], yuvFrame->height/2,0,
+                 GL_LUMINANCE, GL_UNSIGNED_BYTE, yuvFrame->data[2]);
+}
+
+
+
 

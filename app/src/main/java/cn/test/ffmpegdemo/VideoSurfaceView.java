@@ -2,14 +2,17 @@ package cn.test.ffmpegdemo;
 
 import android.content.Context;
 import android.os.Build;
+import android.os.Environment;
 import android.support.annotation.RequiresApi;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 public class VideoSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
-    String videoPath = "/sdcard/Wildlife.wmv";
+    String videoPath = Environment.getExternalStorageDirectory()
+            +"/VisualArts/materials/b888d0a275c1eedaf0e80eb071d2fb47.avi";
     public SurfaceHolder surfaceHolder;
 
     public VideoSurfaceView(Context context) {
@@ -50,6 +53,7 @@ public class VideoSurfaceView extends SurfaceView implements SurfaceHolder.Callb
             @Override
             public void run() {
                 super.run();
+                Log.e("Videosurface:",videoPath);
                 videoPlay(videoPath, surfaceHolder.getSurface());
             }
         };

@@ -70,7 +70,7 @@ public class MyRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        System.out.println("height:"+height);
+        System.out.println("mHeight:"+height);
         GLES20.glViewport(0, 0, width, height);
         InputStream is = Tools.readFromAsserts("ic_launcher.png");
         Bitmap bitmap;
@@ -85,7 +85,7 @@ public class MyRenderer implements GLSurfaceView.Renderer {
         }
         System.out.println("===========onSurfaceChanged===========");
 //                Bitmap bitmap = BitmapFactory.decodeResource(MyApplication.getApplication().getResources(), R.mipmap.ic_launcher);
-//        myBitmap=new MyBitmap(width/2-bitmap.getWidth()/2,height/2-bitmap.getHeight()/2,width,height,bitmap,glContext2);
+//        myBitmap=new MyBitmap(mWidth/2-bitmap.getWidth()/2,mHeight/2-bitmap.getHeight()/2,mWidth,mHeight,bitmap,glContext2);
         myBitmap=new MyBitmap(0,0,width,height,bitmap,glContext2);
         handler.postDelayed(new Runnable() {
             @Override

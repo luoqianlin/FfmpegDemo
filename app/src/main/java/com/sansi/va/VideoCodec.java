@@ -11,6 +11,7 @@ import android.view.Surface;
  */
 public class VideoCodec {
     static {
+        System.loadLibrary("native-lib");
         avInitialize();
     }
 
@@ -68,8 +69,10 @@ public class VideoCodec {
     }
 
     public void close() {
-        free(ptr);
-        ptr = -1;
+        if (ptr != 0) {
+            free(ptr);
+            ptr = 0L;
+        }
     }
 
     public byte[] getNextFrame() {
@@ -87,9 +90,14 @@ public class VideoCodec {
 
     @Override
     protected void finalize() throws Throwable {
-        super.finalize();
-        if (ptr > 0) {
-            close();
+        try{
+            if (ptr != 0) {
+                close();
+            }
+        }finally {
+            super.finalize();
         }
+
+
     }
 }

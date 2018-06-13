@@ -4,9 +4,9 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaExtractor;
-import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -25,7 +25,6 @@ import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
@@ -50,6 +49,15 @@ public class MediaCodecActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.mediacodec_activity);
+//        ImageReader imageReader=ImageReader.newInstance(0,0,0,0);
+//        imageReader.getSurface();
+//        imageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
+//            @Override
+//            public void onImageAvailable(ImageReader reader) {
+//                Image image = reader.acquireNextImage();
+//                image.getPlanes();
+//            }
+//        });
         ffmpeg = FFmpeg.getInstance(getApplicationContext());
         loadFFMpegBinary();
         sv=findViewById(R.id.sv);
@@ -194,7 +202,7 @@ public class MediaCodecActivity extends AppCompatActivity {
     }
 
     public void start(View v) throws IOException {
-        String mInputPath = "/sdcard/VisualArts/materials/24b9f53883ba97e4ee236e3396607066.wmv";
+        String mInputPath = videoPath;
         startPlay(mInputPath);
 //        MediaCodec mediaCodec = MediaCodec.createByCodecName("");
 //        mediaCodec.configure(MediaFormat.createVideoFormat());
@@ -207,99 +215,110 @@ public class MediaCodecActivity extends AppCompatActivity {
             public void run() {
                 super.run();
                 long startTime = System.currentTimeMillis();
-                try {
-                    isVideoExtractorEnd=false;
-                    MediaMetadataRetriever mMetRet = new MediaMetadataRetriever();
 
-                    if(!tryTrancodeIfNeed(mInputPath)){
-                        System.err.println("无法播放....");
-
+                    try {
                         ffmplay(mInputPath);
-                        return;
-                    }
-                    mMetRet.setDataSource(mInputPath);
-                    long mVideoTotalTime=Long.valueOf(mMetRet.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
-                    String bitrate = mMetRet.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE);
-                    String framerate = mMetRet.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE);
-                    System.out.println("video total time:"+mVideoTotalTime+", bitrate:"+bitrate+","+"framerate:"+framerate);
-                    mExtractor = new MediaExtractor();
-                    mExtractor.setDataSource(mInputPath);
-                    int sampleTrackIndex = mExtractor.getSampleTrackIndex();
-                    System.out.println("sampleTrackIndex:" + sampleTrackIndex
-                    );
-                    int count = mExtractor.getTrackCount();
-                    mVideoDecoderTrack = -1;
-                    MediaCodec codec;
-                    MediaFormat format = null;
-                    String mime = null;
-                    for (int i = 0; i < count; i++) {
-                        format = mExtractor.getTrackFormat(i);
-                        mime = format.getString(MediaFormat.KEY_MIME);
-                        if (mime.startsWith("video")) {
-                            mVideoDecoderTrack = i;
-                            break;
-                        }
-                    }
-
-                    if (format != null) {
-                        System.out.println("Input MIME:" + format.getString(MediaFormat.KEY_MIME));
-//                mInputVideoWidth = format.getInteger(MediaFormat.KEY_WIDTH);
-//                mInputVideoHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
-                        try {
-                            codec = MediaCodec.createDecoderByType(mime);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            ffmplay(mInputPath);
-                            return;
-                        }
-                        int[] colorFormats = codec.getCodecInfo().getCapabilitiesForType(mime).colorFormats;
-                        System.out.println("support colorFormats:"+ Arrays.toString(colorFormats));
-                        //将SurfaceTexture作为参数创建一个Surface，用来接收解码视频流
-                        codec.configure(format, sv.getHolder().getSurface(), null, 0);
-                        MediaFormat outputFormat = null;// option B
-                        codec.start();
-                        System.out.println("开始硬件解码");
-                        while (!isVideoExtractorEnd) {
-                            int inputBufferId = codec.dequeueInputBuffer(TIME_OUT);
-                            if (inputBufferId >= 0) {
-                                ByteBuffer inputBuffer = codec.getInputBuffers()[inputBufferId];
-                                inputBuffer.clear();
-                                mExtractor.selectTrack(mVideoDecoderTrack);
-                                int ret = mExtractor.readSampleData(inputBuffer, 0);
-                                if (ret != -1) {
-                                    mVideoStopTimeStamp = mExtractor.getSampleTime();
-                                    codec.queueInputBuffer(inputBufferId, 0, ret, mVideoStopTimeStamp, mExtractor.getSampleFlags());
-                                    isVideoExtractorEnd = false;
-                                } else {
-                                    //可以用!mExtractor.advance，但是貌似会延迟一帧。readSampleData 返回 -1 也表示没有更多数据了
-                                    isVideoExtractorEnd = true;
-                                }
-                                mExtractor.advance();
-                            }
-                            int outputBufferId = codec.dequeueOutputBuffer(videoDecodeBufferInfo, TIME_OUT);
-                            if (outputBufferId >= 0) {
-                                ByteBuffer outputBuffer = codec.getOutputBuffers()[outputBufferId];
-                                MediaFormat bufferFormat = codec.getOutputFormat();// option A
-                                // bufferFormat is identical to outputFormat
-                                // outputBuffer is ready to be processed or rendered.
-                                nowTimeStamp = videoDecodeBufferInfo.presentationTimeUs;
-                                codec.releaseOutputBuffer(outputBufferId, true);
-                            } else if (outputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                                // Subsequent data will conform to new format.
-                                // Can ignore if using getOutputFormat(outputBufferId)
-                                outputFormat = codec.getOutputFormat(); // option B
-                                System.out.println("out mime:" + outputFormat.getString(MediaFormat.KEY_MIME));
-                                System.out.println("OUT KEY_COLOR_FORMAT:" + outputFormat.getInteger(MediaFormat.KEY_COLOR_FORMAT));
-                            }
-                        }
-                        mExtractor.release();
-                        mMetRet.release();
-                        codec.stop();
-                        codec.release();
+//                    isVideoExtractorEnd=false;
+//                    MediaMetadataRetriever mMetRet = new MediaMetadataRetriever();
+//
+//                    if(!tryTrancodeIfNeed(mInputPath)){
+//                        System.err.println("无法播放....");
+//
+//                        ffmplay(mInputPath);
+//                        return;
+//                    }
+//                    mMetRet.setDataSource(mInputPath);
+//                    long mVideoTotalTime=Long.valueOf(mMetRet.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+//                    String bitrate = mMetRet.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE);
+//                    String framerate = mMetRet.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE);
+//                    System.out.println("video total time:"+mVideoTotalTime+", bitrate:"+bitrate+","+"framerate:"+framerate);
+//                    mExtractor = new MediaExtractor();
+//                    mExtractor.setDataSource(mInputPath);
+//                    int sampleTrackIndex = mExtractor.getSampleTrackIndex();
+//                    System.out.println("sampleTrackIndex:" + sampleTrackIndex
+//                    );
+//                    int count = mExtractor.getTrackCount();
+//                    mVideoDecoderTrack = -1;
+//                    MediaCodec codec;
+//                    MediaFormat format = null;
+//                    String mime = null;
+//                    for (int i = 0; i < count; i++) {
+//                        format = mExtractor.getTrackFormat(i);
+//                        mime = format.getString(MediaFormat.KEY_MIME);
+//                        if (mime.startsWith("video")) {
+//                            mVideoDecoderTrack = i;
+//                            break;
+//                        }
+//                    }
+//
+//                    if (format != null) {
+//                        System.out.println("Input MIME:" + format.getString(MediaFormat.KEY_MIME));
+//                        System.out.printf("Height:%d,Width:%d\n",format.getInteger(MediaFormat.KEY_HEIGHT),
+//                                format.getInteger(MediaFormat.KEY_WIDTH));
+////                mInputVideoWidth = format.getInteger(MediaFormat.KEY_WIDTH);
+////                mInputVideoHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
+//                        try {
+//                            codec = MediaCodec.createDecoderByType(mime);
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                            ffmplay(mInputPath);
+//                            return;
+//                        }
+//
+////                        MediaFormat mediaFormat = MediaFormat.createVideoFormat(mime, info.width,info.height);
+///**指定视频帧格式*/
+////                        mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT,MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);//指定帧格式
+/////***/
+////                        codec.configure(mediaFormat, null, null, 0);
+//
+//                        int[] colorFormats = codec.getCodecInfo().getCapabilitiesForType(mime).colorFormats;
+//                        System.out.println("support colorFormats:"+ Arrays.toString(colorFormats));
+//                        //将SurfaceTexture作为参数创建一个Surface，用来接收解码视频流
+//                        codec.configure(format, sv.getHolder().getSurface(), null, 0);
+//                        MediaFormat outputFormat = null;// option B
+//                        codec.start();
+//                        System.out.println("开始硬件解码");
+//                        while (!isVideoExtractorEnd) {
+//                            int inputBufferId = codec.dequeueInputBuffer(TIME_OUT);
+//                            if (inputBufferId >= 0) {
+//                                ByteBuffer inputBuffer = codec.getInputBuffers()[inputBufferId];
+//                                inputBuffer.clear();
+//                                mExtractor.selectTrack(mVideoDecoderTrack);
+//                                int ret = mExtractor.readSampleData(inputBuffer, 0);
+//                                if (ret != -1) {
+//                                    mVideoStopTimeStamp = mExtractor.getSampleTime();
+//                                    codec.queueInputBuffer(inputBufferId, 0, ret, mVideoStopTimeStamp, mExtractor.getSampleFlags());
+//                                    isVideoExtractorEnd = false;
+//                                } else {
+//                                    //可以用!mExtractor.advance，但是貌似会延迟一帧。readSampleData 返回 -1 也表示没有更多数据了
+//                                    isVideoExtractorEnd = true;
+//                                }
+//                                mExtractor.advance();
+//                            }
+//                            int outputBufferId = codec.dequeueOutputBuffer(videoDecodeBufferInfo, TIME_OUT);
+//                            if (outputBufferId >= 0) {
+//                                ByteBuffer outputBuffer = codec.getOutputBuffers()[outputBufferId];
+//                                MediaFormat bufferFormat = codec.getOutputFormat();// option A
+//                                // bufferFormat is identical to outputFormat
+//                                // outputBuffer is ready to be processed or rendered.
+//                                nowTimeStamp = videoDecodeBufferInfo.presentationTimeUs;
+//                                codec.releaseOutputBuffer(outputBufferId, true);
+//                            } else if (outputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+//                                // Subsequent data will conform to new format.
+//                                // Can ignore if using getOutputFormat(outputBufferId)
+//                                outputFormat = codec.getOutputFormat(); // option B
+//                                System.out.println("out mime:" + outputFormat.getString(MediaFormat.KEY_MIME));
+//                                System.out.println("OUT KEY_COLOR_FORMAT:" + outputFormat.getInteger(MediaFormat.KEY_COLOR_FORMAT));
+//                            }
+//                        }
+//                        mExtractor.release();
+//                        mMetRet.release();
+//                        codec.stop();
+//                        codec.release();
                         long end = System.currentTimeMillis();
                         System.out.printf("total cost %.2f", (end - startTime) / 1000.0);
                         System.out.println("============Finish===============");
-                    }
+//                    }
 
 
                 } catch (Exception e) {
@@ -308,6 +327,9 @@ public class MediaCodecActivity extends AppCompatActivity {
             }
         }.start();
     }
+
+    String videoPath = Environment.getExternalStorageDirectory()
+            +"/VisualArts/materials/f64e4f069e4dd171962da282f5de60ae.mp4";
 
     private void ffmplay(String mInputPath) {
         System.out.println("软解...");
