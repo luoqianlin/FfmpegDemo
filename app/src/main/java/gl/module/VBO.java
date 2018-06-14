@@ -17,6 +17,8 @@ public class VBO {
     public static final int FIT_XY = 0;
     public static final int ASPECT_RATIO = 1;
     public static final int FIT_REPEAT = 2;
+    public static final int CUT_GRAVITY_TOP_RIGHT = 3;
+    public static final int CUT_GRAVITY_TOP_LEFT = 4;
 
     protected   final float[] VERTEX = {   // in counterclockwise order:
             1f, 0.5f, 0.0f,   // top right
@@ -29,9 +31,9 @@ public class VBO {
     };
     protected  final float[] TEX_VERTEX = {   // in clockwise order:
             1f, 0,  // bottom right
-            0, 0,  // bottom left
-            0, 1f,  // top left
-            1, 1,  // top right
+            0f, 0,  // bottom left
+            0f, 1f,  // top left
+            1f, 1,  // top right
     };
 
     protected final FloatBuffer mVertexBuffer;
@@ -104,14 +106,24 @@ public class VBO {
 
     }
 
-    public void setDisplyType(int rawWidth, int rawHeight, int displyType) {
-        if (rawWidth == this.rawWidth && rawHeight == this.rawHeight
+
+    public void setDisplyType(int rawWidth, int rawHeight, int displyType){
+        setDisplyType(this.x,rawWidth,rawHeight,displyType);
+    }
+
+    public void setDisplyType(int x,int rawWidth, int rawHeight, int displyType) {
+        if (this.x== x && rawWidth == this.rawWidth && rawHeight == this.rawHeight
                 && displyType == this.displyType) {
             return;
         }
+        this.x = x;
         this.rawWidth = rawWidth;
         this.rawHeight = rawHeight;
         this.displyType = displyType;
+        invalidate();
+    }
+
+    public void invalidate() {
         int targetWidth = this.targetWidth;
         int targetHeight = this.targetHeight;
         if(displyType== VBO.FIT_REPEAT){
@@ -134,6 +146,36 @@ public class VBO {
                 targetHeight = (int) (targetWidth / wh_ratio + 0.5);
             } else {
                 targetWidth = (int) (targetHeight * wh_ratio + 0.5);
+            }
+        }else if(displyType== CUT_GRAVITY_TOP_RIGHT){
+            float w_factor = targetWidth * 1.0f / rawWidth;
+            float h_factor = targetHeight * 1.0f / rawHeight;
+            if (w_factor < 1.0f) {
+                TEX_VERTEX[2] = 1 - w_factor;
+                TEX_VERTEX[4] = 1 - w_factor;
+            } else {
+                targetWidth = rawWidth;
+            }
+            if (h_factor < 1.0f) {
+                TEX_VERTEX[5] = h_factor;
+                TEX_VERTEX[7] = h_factor;
+            } else {
+                targetHeight = rawHeight;
+            }
+        }else if(displyType == CUT_GRAVITY_TOP_LEFT){
+            float w_factor = targetWidth * 1.0f / rawWidth;
+            float h_factor = targetHeight * 1.0f / rawHeight;
+            if (w_factor < 1.0f) {
+                TEX_VERTEX[0] = w_factor;
+                TEX_VERTEX[6] = w_factor;
+            } else {
+                targetWidth = rawWidth;
+            }
+            if (h_factor < 1.0f) {
+                TEX_VERTEX[5] = h_factor;
+                TEX_VERTEX[7] = h_factor;
+            } else {
+                targetHeight = rawHeight;
             }
         }
         System.out.println("TEX_VERTEX=>"+ Arrays.toString(TEX_VERTEX));
@@ -161,6 +203,29 @@ public class VBO {
 
         System.out.println("****>"+ Arrays.toString(VERTEX));
         rebuildVBO();
+    }
+
+    float deltaTex = 0.01f;
+    boolean initdeltaTexx=false;
+
+    public void moveTex(){
+        if (!initdeltaTexx) {
+            deltaTex = -5f / this.rawWidth * 1.0f;
+            initdeltaTexx = true;
+        }
+        System.out.println("deltaTex:"+deltaTex);
+        if (TEX_VERTEX[0] >= 1.0f && deltaTex > 0) {
+            deltaTex = -1 * deltaTex;
+        } else if (TEX_VERTEX[2] <= 0 && deltaTex < 0) {
+            deltaTex = -1 * deltaTex;
+        }
+        for (int i = 0; i < TEX_VERTEX.length; i += 2) {
+            TEX_VERTEX[i] += deltaTex;
+        }
+        System.out.println("TEX_VERTEX >> "+Arrays.toString(TEX_VERTEX));
+        mTexVertexBuffer.clear();
+        mTexVertexBuffer.put(TEX_VERTEX);
+        mTexVertexBuffer.flip();
     }
 
     private void rebuildVBO() {

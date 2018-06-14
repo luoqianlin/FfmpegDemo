@@ -1,7 +1,6 @@
 package gl.module;
 
 import android.graphics.Bitmap;
-import android.graphics.PointF;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 
@@ -15,7 +14,7 @@ public class MyBitmap  extends VBO{
 
 
     private final Bitmap bitmap;
-    private  int deltaX=10;
+    private  int deltaX=3;
 
     public void move(){
         setX(this.x+this.deltaX);
@@ -23,7 +22,7 @@ public class MyBitmap  extends VBO{
 
     public void check(){
         if (deltaX > 0) {
-            if (this.x+this.bitmap.getWidth() >= this.winWidth) {
+            if (this.x+this.targetWidth>= this.winWidth) {
                 this.deltaX = -1 * this.deltaX;
             }
         } else if(this.deltaX<0){
@@ -35,34 +34,8 @@ public class MyBitmap  extends VBO{
     }
 
     public synchronized void setX(int x){
-        this.x=x;
-        int width=bitmap.getWidth();
-        int height=bitmap.getHeight();
-        PointF pointF=new PointF();
-        for (int i = 0; i < VERTEX.length; i += 3) {
-            if(i==0) {
-                toGLCoordinate(x + width, y, winWidth, winHeight, pointF);
-                VERTEX[i] = pointF.x;
-                VERTEX[i + 1] = pointF.y;
-            }else if(i==3){
-                toGLCoordinate(x, y, winWidth, winHeight, pointF);
-                VERTEX[i] = pointF.x;
-                VERTEX[i + 1] = pointF.y;
-            }else if(i==6){
-                toGLCoordinate(x, y+height, winWidth, winHeight, pointF);
-                VERTEX[i] = pointF.x;
-                VERTEX[i + 1] = pointF.y;
-            }else if(i==9){
-                toGLCoordinate(x+width, y+height, winWidth, winHeight, pointF);
-                VERTEX[i] = pointF.x;
-                VERTEX[i + 1] = pointF.y;
-            }
-        }
-
-//        System.out.println("****>"+Arrays.toString(VERTEX));
-        mVertexBuffer.clear();
-        mVertexBuffer.put(VERTEX);
-        mVertexBuffer.flip();
+        this.x = x;
+        invalidate();
     }
 
     public int getX() {

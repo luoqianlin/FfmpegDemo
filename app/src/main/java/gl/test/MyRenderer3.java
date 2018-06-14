@@ -6,8 +6,8 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Environment;
 import android.os.Handler;
+import android.util.Log;
 
-import com.sansi.va.VAFrame;
 import com.sansi.va.VideoCodec;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -62,18 +62,19 @@ public class MyRenderer3 implements GLSurfaceView.Renderer {
         GLES20.glViewport(0, 0, width, height);
         Bitmap bitmap = BitmapFactory.decodeResource(MyApplication.getApplication().getResources(), R.mipmap.hydrangeas);
         System.out.println("===========onSurfaceChanged===========");
-        int targetWidth = bitmap.getWidth() *2;
+        Log.e("Main",bitmap.getWidth()+" x "+bitmap.getHeight());
+        int targetWidth = bitmap.getWidth()/2;
         int targetHeight = bitmap.getHeight();
         myBitmap=new MyBitmap(mWidth/2-targetWidth/2,mHeight/2-targetHeight/2,mWidth,mHeight,
                 targetWidth, targetHeight,
-                  bitmap,glContext2,MyBitmap.ASPECT_RATIO);
+                  bitmap,glContext2,MyBitmap.CUT_GRAVITY_TOP_RIGHT);
         myGLYUVContext = new MyGLYUVContext();
         myYUV = new MyYUV(0,0,width,height,width/2,height/2,myGLYUVContext);
-        videoCodec = new VideoCodec(file);
-        videoCodec.open();
-        int retV = videoCodec.init(width, height);
-        System.out.println("videoCodec ret:" + retV);
-        this.glRgb24 = new GL_RGB24(0, 0, width, height,width , height, glContext2);
+//        videoCodec = new VideoCodec(file);
+//        videoCodec.open();
+//        int retV = videoCodec.init(width, height);
+//        System.out.println("videoCodec ret:" + retV);
+//        this.glRgb24 = new GL_RGB24(0, 0, width, height,width , height, glContext2);
     }
 /**
  * GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT
@@ -82,33 +83,26 @@ boolean first = false;
     @Override
     public void onDrawFrame(GL10 gl) {
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
-        long decodestart=System.currentTimeMillis();
-        VAFrame vaFrame = videoCodec.nextFrame();
+//        long decodestart=System.currentTimeMillis();
+//        VAFrame vaFrame = videoCodec.nextFrame();
 //        boolean ft = videoCodec.fillBitmap(myBitmap.getBitmap());
-        long decodeend=System.currentTimeMillis();
+//        long decodeend=System.currentTimeMillis();
 //        System.out.printf("decode cost:%d\n",(decodeend-decodestart));
-        if (vaFrame != null) {
-//            System.out.println("---");
-//                        System.out.println("解码出的视屏 mWidth:" + vaFrame.getWidth() + ",mHeight:" + vaFrame.getHeight());
-//                        for(int i=0;i<3;i++){
-//                            System.out.println("linesize["+i+"]="+vaFrame.getLinesize()[i]);
-//                        }
-
-//                    System.out.println("ptr:" + Long.toHexString(vaFrame.getPtr()));
-
+//        if (vaFrame != null) {
             long renderstart=System.currentTimeMillis();
-            if (vaFrame.getFormat() == 0) {
-                myYUV.setVaFrame(vaFrame);
-                myYUV.draw();
-            } else {
-                glRgb24.setVaFrame(vaFrame);
-                glRgb24.draw();
-            }
-//            myBitmap.draw();
+//            if (vaFrame.getFormat() == 0) {
+//                myYUV.setVaFrame(vaFrame);
+//                myYUV.draw();
+//            } else {
+//                glRgb24.setVaFrame(vaFrame);
+//                glRgb24.draw();
+//            }
+            myBitmap.moveTex();
+            myBitmap.draw();
             long renderend=System.currentTimeMillis();
 //            System.out.printf("render cost:%d\n",(renderend-renderstart));
 
-      }else{
+    /*  }else{
 //            System.out.println("is null end");
             if(!first) {
                 System.out.println("cost:" + (System.currentTimeMillis() - startTime) / 1000.0 + "s");
@@ -121,7 +115,7 @@ boolean first = false;
             videoCodec.open();
             int retV = videoCodec.init(this.mWidth, this.mHeight);
             System.out.println("videoCodec ret:" + retV);
-        }
+        }*/
 
 
 
